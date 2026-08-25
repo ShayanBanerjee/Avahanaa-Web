@@ -7,7 +7,13 @@
     {
       "source": "functions",
       "codebase": "default",
-      "ignore": ["node_modules", ".git", "*.log", ".env", ".env.*"]
+      "ignore": [
+        "node_modules",
+        ".git",
+        "*.log",
+        ".env",
+        ".env.*"
+      ]
     }
   ],
   "hosting": {
@@ -22,37 +28,90 @@
       "**/node_modules/**",
       "functions/**"
     ],
+    "redirects": [
+      {
+        "source": "/notify.html",
+        "destination": "/index.html?page=notify",
+        "type": 301
+      }
+    ],
     "rewrites": [
-      { "source": "/api/qr/**", "function": "resolveQr", "region": "asia-south1" },
-      { "source": "/api/notify", "function": "notify", "region": "asia-south1" },
-      { "source": "/api/lookup", "function": "lookup", "region": "asia-south1" },
-      { "source": "/n/**", "destination": "/index.html" },
-      { "source": "**", "destination": "/index.html" }
+      {
+        "source": "/api/qr/**",
+        "function": "resolveQr",
+        "region": "asia-south1"
+      },
+      {
+        "source": "/api/notify",
+        "function": "notify",
+        "region": "asia-south1"
+      },
+      {
+        "source": "/api/lookup",
+        "function": "lookup",
+        "region": "asia-south1"
+      },
+      {
+        "source": "/n/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
     ],
     "headers": [
       {
         "source": "**",
         "headers": [
-          { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "X-Frame-Options", "value": "DENY" },
-          { "key": "Referrer-Policy", "value": "no-referrer" }
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "DENY"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "no-referrer"
+          }
         ]
       },
       {
         "source": "/api/**",
-        "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store"
+          }
+        ]
       },
       {
         "source": "/n/**",
-        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
       }
     ]
   },
   "emulators": {
-    "firestore": { "port": 8080 },
-    "functions": { "port": 5001 },
-    "hosting": { "port": 5055 },
-    "ui": { "enabled": true, "port": 4000 },
+    "firestore": {
+      "port": 8080
+    },
+    "functions": {
+      "port": 5001
+    },
+    "hosting": {
+      "port": 5055
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
+    },
     "singleProjectMode": true
   }
 }

@@ -103,6 +103,27 @@ the old callable. Once the hosting cache has turned over:
 firebase functions:delete notifyOwner --region us-central1 --project congestion-free
 ```
 
+## notify.html
+
+Deleted, and redirected to `/index.html?page=notify` (301, query string
+carried across by Hosting).
+
+It was a second, standalone copy of the scan flow carrying the same leak as the
+main page — its own `users/{uid}` read for `fcmToken` and `phoneNumber` — and
+it was live: `GET /notify.html` returned 200. The project had already moved to
+`index.html?page=notify`, so rather than port the leak twice it redirects to
+the one maintained implementation.
+
+The URL is kept rather than dropped because it is not knowable from here
+whether any printed sticker points at it. Redirects are evaluated before static
+content in Hosting, so this holds even if the file is ever restored.
+
+Verify after deploy:
+
+```bash
+curl -sI https://avahanaa.com/notify.html | grep -i 'location\|HTTP/'
+```
+
 ## Plate lookup
 
 `/api/lookup` preserves the "type a registration number instead of scanning"
