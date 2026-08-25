@@ -227,6 +227,45 @@
         return bytes.slice(0, bytes.length - pad);
       }
 
+      const shortNotifyRoutePrefixes = new Set(["n", "notify"]);
+
+      function parseShortNotifyRoute(pathname = window.location.pathname) {
+        const cleanPath = String(pathname || "")
+          .split("?")[0]
+          .split("#")[0]
+          .trim();
+        if (!cleanPath) {
+          return null;
+        }
+        const segments = cleanPath.split("/").filter(Boolean);
+        if (segments.length < 2) {
+          return null;
+        }
+        const prefix = segments[0].toLowerCase();
+        if (!shortNotifyRoutePrefixes.has(prefix)) {
+          return null;
+        }
+        const qrId = decodeURIComponent(segments[1] || "").trim();
+        if (!qrId) {
+          return null;
+        }
+        return { page: "notify", qrId };
+      }
+
+      function getCurrentRouteParams() {
+        const params = new URLSearchParams(window.location.search);
+        const shortRoute = parseShortNotifyRoute(window.location.pathname);
+        if (shortRoute) {
+          if (!params.has("page")) {
+            params.set("page", shortRoute.page);
+          }
+          if (!params.has("qr")) {
+            params.set("qr", shortRoute.qrId);
+          }
+        }
+        return params;
+      }
+
       async function decodeQrPayload(payload, versionHint = "") {
         if (!payload) {
           return null;
@@ -278,8 +317,14 @@
           toTrimmedString(versionHint) ||
           toTrimmedString(parsed.version) ||
           toTrimmedString(parsed.payloadVersion);
+        const vehicleDetails =
+          parsed.vehicle && typeof parsed.vehicle === "object"
+            ? parsed.vehicle
+            : {};
         const carDetailSource =
-          parsed.carDetails && typeof parsed.carDetails === "object"
+          Object.keys(vehicleDetails).length
+            ? vehicleDetails
+            : parsed.carDetails && typeof parsed.carDetails === "object"
             ? parsed.carDetails
             : parsed;
         const cleanCarDetails = {};
@@ -299,11 +344,37 @@
         if (fcmToken) {
           result.fcmToken = fcmToken;
         }
-        const userId = toTrimmedString(parsed.userId);
+        const userId = toTrimmedString(
+          parsed.userId ||
+            (parsed.metadata &&
+            typeof parsed.metadata === "object"
+              ? parsed.metadata.userId
+              : "")
+        );
         if (userId) {
           result.userId = userId;
         }
-        const qrCodeId = toTrimmedString(parsed.qrCodeId || parsed.qrId);
+        const vehicleId = toTrimmedString(
+          parsed.vehicleId ||
+            (vehicleDetails && typeof vehicleDetails.id === "string"
+              ? vehicleDetails.id
+              : "") ||
+            (parsed.metadata &&
+            typeof parsed.metadata === "object"
+              ? parsed.metadata.vehicleId
+              : "")
+        );
+        if (vehicleId) {
+          result.vehicleId = vehicleId;
+        }
+        const qrCodeId = toTrimmedString(
+          parsed.qrCodeId ||
+            parsed.qrId ||
+            (parsed.metadata &&
+            typeof parsed.metadata === "object"
+              ? parsed.metadata.qrCodeId
+              : "")
+        );
         if (qrCodeId) {
           result.qrCodeId = qrCodeId;
         }
@@ -372,74 +443,42 @@
         return bytesToBase64(new Uint8Array(encryptedBuffer));
       }
 
-      // Firebase configuration is fetched at runtime so keys are not embedded in the HTML.
+      // Firebase configuration (replace with your own values)
+      const firebaseConfig = {
+        apiKey: "AIzaSyDVB09QVh9YizQ7p1YXGcQWQ_43NV6f0SE",
+        authDomain: "congestion-free.web.app",
+        projectId: "congestion-free",
+        storageBucket: "congestion-free.firebasestorage.app",
+        messagingSenderId: "76007537447",
+        appId: "1:76007537447:web:57a848570f39091b5a4702",
+        measurementId: "G-5PNGPJZL6D",
+      };
+
+      // Initialize Firebase using the compat SDK
       let db = null;
       let functionsClient = null;
-      let firebaseInitPromise = null;
-
-      async function fetchFirebaseConfig() {
-        try {
-          const response = await fetch("/api/firebase-config", {
-            method: "GET",
-            credentials: "same-origin",
-          });
-          if (!response.ok) {
-            throw new Error(`Failed to load Firebase config (status ${response.status})`);
-          }
-          const config = await response.json();
-          if (
-            !config ||
-            typeof config.apiKey !== "string" ||
-            !config.apiKey.trim()
-          ) {
-            throw new Error("Invalid Firebase config response.");
-          }
-          return config;
-        } catch (error) {
-          console.error("Firebase config fetch failed:", error);
-          return null;
+      try {
+        if (firebase.apps.length === 0) {
+          firebase.initializeApp(firebaseConfig);
         }
-      }
-
-      async function ensureFirebaseInitialised() {
-        if (firebaseInitPromise) {
-          return firebaseInitPromise;
-        }
-        firebaseInitPromise = (async () => {
-          const firebaseConfig = await fetchFirebaseConfig();
-          if (!firebaseConfig) {
-            return false;
-          }
+        db = firebase.firestore();
+        functionsClient = firebase.functions();
+        if (typeof firebase.analytics === "function") {
           try {
-            if (firebase.apps.length === 0) {
-              firebase.initializeApp(firebaseConfig);
-            }
-            db = firebase.firestore();
-            functionsClient = firebase.functions();
-            if (typeof firebase.analytics === "function") {
-              try {
-                firebase.analytics();
-              } catch (analyticsErr) {
-                console.warn("Firebase analytics initialisation failed:", analyticsErr);
-              }
-            }
-            return true;
-          } catch (initErr) {
-            console.error("Firebase initialization failed:", initErr);
-            return false;
+            firebase.analytics();
+          } catch (analyticsErr) {
+            console.warn("Firebase analytics initialisation failed:", analyticsErr);
           }
-        })();
-        return firebaseInitPromise;
+        }
+      } catch (initErr) {
+        console.error("Firebase initialization failed:", initErr);
       }
-
-      // Kick off Firebase initialisation eagerly; downstream calls also await this.
-      ensureFirebaseInitialised().catch(() => {});
 
       /**
        * Utility to parse query parameters
        */
       function getQueryParam(name) {
-        const params = new URLSearchParams(window.location.search);
+        const params = getCurrentRouteParams();
         return params.get(name);
       }
 
@@ -450,7 +489,6 @@
        */
       async function fetchUserByQrId(qrId) {
         if (!qrId) return null;
-        await ensureFirebaseInitialised();
         // If Firestore isn't configured, return a test user for demonstration when qrId is "1".
         if (!db) {
           if (qrId === "1") {
@@ -497,12 +535,12 @@
        */
       async function fetchUserByIdOrPlate(identifier) {
         if (!identifier) return null;
-        await ensureFirebaseInitialised();
-        // Normalise identifier for licence plate matching
-        const normId = identifier.trim().toUpperCase();
+        const rawId = identifier.trim();
+        // Keep rawId for exact QR doc lookups, and normalise variants for plate matching.
+        const normId = rawId.toUpperCase();
         const canonicalId = canonicalisePlate(identifier);
         const lookupCandidates = Array.from(
-          new Set([normId, canonicalId].filter(Boolean))
+          new Set([rawId, normId, canonicalId].filter(Boolean))
         );
         // Demo fallback when Firestore is not set up
         if (!db) {
@@ -524,7 +562,66 @@
           return null;
         }
         try {
-          // First try to resolve by qrCodeId
+          // First try direct lookup in qrCodes collection by document ID.
+          for (const candidate of lookupCandidates) {
+            const qrDoc = await db.collection("qrCodes").doc(candidate).get();
+            if (!qrDoc.exists) {
+              continue;
+            }
+            const qrData = qrDoc.data() || {};
+            const metadata =
+              qrData.metadata && typeof qrData.metadata === "object"
+                ? qrData.metadata
+                : {};
+            const userId = (qrData.userId || metadata.userId || "").trim();
+            if (!userId) {
+              continue;
+            }
+            const userDoc = await db.collection("users").doc(userId).get();
+            if (!userDoc.exists) {
+              continue;
+            }
+            const userData = userDoc.data() || {};
+            let vehicleDetails = {};
+            const vehicleId = (qrData.vehicleId || metadata.vehicleId || "").trim();
+            if (vehicleId) {
+              try {
+                const vehicleDoc = await db
+                  .collection("users")
+                  .doc(userId)
+                  .collection("vehicles")
+                  .doc(vehicleId)
+                  .get();
+                if (vehicleDoc.exists) {
+                  const vehicleData = vehicleDoc.data() || {};
+                  vehicleDetails = {
+                    color: vehicleData.color || "",
+                    carModel: vehicleData.carModel || "",
+                    licensePlate: vehicleData.licensePlate || "",
+                  };
+                }
+              } catch (vehicleLookupErr) {
+                console.warn("Vehicle details lookup failed for QR", vehicleLookupErr);
+              }
+            }
+            return {
+              id: userId,
+              ...userData,
+              userId,
+              vehicleId,
+              qrCodeId: candidate,
+              carDetails:
+                Object.keys(vehicleDetails).length
+                  ? vehicleDetails
+                  : userData.carDetails || {},
+              fcmToken:
+                (typeof userData.fcmToken === "string" && userData.fcmToken.trim()) ||
+                (typeof qrData.fcmToken === "string" ? qrData.fcmToken.trim() : "") ||
+                "",
+            };
+          }
+
+          // Legacy fallback: try users.qrCodeId.
           let snapshot = await db
             .collection("users")
             .where("qrCodeId", "==", identifier)
@@ -534,6 +631,63 @@
             const doc = snapshot.docs[0];
             return { id: doc.id, ...doc.data() };
           }
+
+          // Multi-vehicle lookup by plate or asset number via collectionGroup.
+          const vehicleFields = ["licensePlate", "assetNumber"];
+          for (const field of vehicleFields) {
+            for (const candidate of lookupCandidates) {
+              snapshot = await db
+                .collectionGroup("vehicles")
+                .where(field, "==", candidate)
+                .limit(1)
+                .get();
+              if (snapshot.empty) {
+                continue;
+              }
+              const vehicleDoc = snapshot.docs[0];
+              const vehicleData = vehicleDoc.data() || {};
+              const parentDocRef =
+                vehicleDoc.ref.parent && vehicleDoc.ref.parent.parent
+                  ? vehicleDoc.ref.parent.parent
+                  : null;
+              const ownerUserId = (
+                vehicleData.userId ||
+                (parentDocRef ? parentDocRef.id : "")
+              ).trim();
+              if (!ownerUserId) {
+                continue;
+              }
+              const userDoc = await db.collection("users").doc(ownerUserId).get();
+              const userData = userDoc.exists ? userDoc.data() || {} : {};
+              return {
+                id: ownerUserId,
+                ...userData,
+                userId: ownerUserId,
+                vehicleId: vehicleDoc.id,
+                qrCodeId:
+                  vehicleData.qrCodeId ||
+                  userData.qrCodeId ||
+                  "",
+                carDetails: {
+                  color:
+                    typeof vehicleData.color === "string" ? vehicleData.color : "",
+                  carModel:
+                    typeof vehicleData.carModel === "string"
+                      ? vehicleData.carModel
+                      : "",
+                  licensePlate:
+                    typeof vehicleData.licensePlate === "string"
+                      ? vehicleData.licensePlate
+                      : "",
+                },
+                fcmToken:
+                  typeof userData.fcmToken === "string"
+                    ? userData.fcmToken.trim()
+                    : "",
+              };
+            }
+          }
+
           // Next try by license plate (normalised). Fields may be named differently; try common names
           const plateFields = [
             "licensePlate",
@@ -566,11 +720,12 @@
 
       async function fetchOwnerByQr(qrCodeId) {
         if (!qrCodeId) return null;
-        await ensureFirebaseInitialised();
         if (!db) {
           if (qrCodeId === "1") {
             return {
               userId: "demoUser",
+              vehicleId: "demoVehicle",
+              isActive: true,
               fcmToken: "TEST_FCM_TOKEN",
               carDetails: {
                 carModel: "Test Car",
@@ -591,12 +746,22 @@
             qrData.metadata && typeof qrData.metadata === "object"
               ? qrData.metadata
               : {};
+          const metadataVehicle =
+            metadata.vehicle && typeof metadata.vehicle === "object"
+              ? metadata.vehicle
+              : {};
+          const metadataCarDetails =
+            metadata.carDetails && typeof metadata.carDetails === "object"
+              ? metadata.carDetails
+              : {};
           const metadataContact =
             metadata.contact && typeof metadata.contact === "object"
               ? metadata.contact
               : {};
           const owner = {
             userId: qrData.userId || metadata.userId || "",
+            vehicleId: qrData.vehicleId || metadata.vehicleId || "",
+            isActive: qrData.isActive !== false,
             fcmToken: "",
             contact: {
               email:
@@ -608,15 +773,17 @@
                   ? metadataContact.phoneNumber
                   : "",
             },
-            carDetails:
-              metadata.carDetails && typeof metadata.carDetails === "object"
-                ? metadata.carDetails
-                : {},
+            carDetails: Object.keys(metadataVehicle).length
+              ? metadataVehicle
+              : metadataCarDetails,
           };
           if (owner.userId) {
             const userDoc = await db.collection("users").doc(owner.userId).get();
             if (userDoc.exists) {
               const userData = userDoc.data() || {};
+              if (userData.notificationsEnabled === false) {
+                owner.isActive = false;
+              }
               if (typeof userData.fcmToken === "string" && userData.fcmToken.trim()) {
                 owner.fcmToken = userData.fcmToken.trim();
               }
@@ -638,6 +805,41 @@
               }
             }
           }
+          if (owner.userId && owner.vehicleId) {
+            try {
+              const vehicleDoc = await db
+                .collection("users")
+                .doc(owner.userId)
+                .collection("vehicles")
+                .doc(owner.vehicleId)
+                .get();
+              if (vehicleDoc.exists) {
+                const vehicleData = vehicleDoc.data() || {};
+                if (!owner.carDetails || !Object.keys(owner.carDetails).length) {
+                  owner.carDetails = {
+                    color:
+                      typeof vehicleData.color === "string" ? vehicleData.color : "",
+                    carModel:
+                      typeof vehicleData.carModel === "string"
+                        ? vehicleData.carModel
+                        : "",
+                    licensePlate:
+                      typeof vehicleData.licensePlate === "string"
+                        ? vehicleData.licensePlate
+                        : "",
+                  };
+                }
+                if (
+                  vehicleData.isActive === false ||
+                  vehicleData.notificationsEnabled === false
+                ) {
+                  owner.isActive = false;
+                }
+              }
+            } catch (vehicleLookupErr) {
+              console.warn("Vehicle details lookup failed for owner QR", vehicleLookupErr);
+            }
+          }
           if (!owner.fcmToken && typeof qrData.fcmToken === "string") {
             owner.fcmToken = qrData.fcmToken.trim();
           }
@@ -652,7 +854,6 @@
        * Invokes the notifyOwner Cloud Function to deliver push notifications.
        */
       async function triggerNotifyFunction(payload) {
-        await ensureFirebaseInitialised();
         if (!functionsClient) {
           return {
             ok: false,
@@ -720,6 +921,12 @@
                   <li className="nav-item">
                     <a className="nav-link" href="./index.html?page=contact">Contact</a>
                   </li>
+                  <li className="nav-item">
+                    <a className="nav-link" href="./privacy-policy.html">Privacy</a>
+                  </li>
+                  <li className="nav-item">
+                    <a className="nav-link" href="./terms-and-conditions.html">Terms</a>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -742,6 +949,11 @@
               </p>
               <p className="mb-0 small">
                 Powered by Firebase &amp; React. Designed with Bootswatch Flatly.
+              </p>
+              <p className="mb-0 mt-2 small">
+                <a className="link-light" href="./privacy-policy.html">Privacy Policy</a>
+                <span className="mx-2">|</span>
+                <a className="link-light" href="./terms-and-conditions.html">Terms &amp; Conditions</a>
               </p>
             </div>
           </footer>
@@ -832,10 +1044,12 @@
               const candidateParams = new URLSearchParams(candidateUrl.search);
               // Remove routing hints from legacy links
               candidateParams.delete("page");
-              const qrFromUrl =
+              const qrFromQuery =
                 candidateParams.get("qr") ||
                 candidateParams.get("id") ||
                 candidateParams.get("vehicle");
+              const shortRoute = parseShortNotifyRoute(candidateUrl.pathname);
+              const qrFromUrl = qrFromQuery || (shortRoute ? shortRoute.qrId : "");
               if (qrFromUrl) {
                 identifier = qrFromUrl;
                 candidateParams.set("qr", qrFromUrl);
@@ -1158,8 +1372,7 @@
         async function handleSubmit(e) {
           e.preventDefault();
           setError("");
-          const ready = await ensureFirebaseInitialised();
-          if (!ready || !db) {
+          if (!db) {
             setError(
               "Contact form is unavailable because Firebase is not configured."
             );
@@ -1188,7 +1401,7 @@
             <p className="mb-4">
               We’d love to hear from you! Share your questions, feedback or a review
               of your experience with Avahanaa. Your comments will be sent directly
-              to our team at <strong>hello@avahanaa.com</strong>. Your input helps us
+              to our team at <strong>souvikbanerjee73@gmail.com</strong>. Your input helps us
               improve and better serve our community.
             </p>
             {error && (
@@ -1251,7 +1464,7 @@
                   <br />India
                 </p>
                 <p>
-                  Email: <a href="mailto:hello@avahanaa.com">hello@avahanaa.com</a>
+                  Email: <a href="mailto:souvikbanerjee73@gmail.com">souvikbanerjee73@gmail.com</a>
                 </p>
                 <p>Phone: +91 98765 43210</p>
               </div>
@@ -1300,7 +1513,7 @@
         <p>
           Have questions or feedback? We’d love to hear from you.
           Send us an email at
-          <a href="mailto:hello@avahanaa.com">hello@avahanaa.com</a>.
+          <a href="mailto:souvikbanerjee73@gmail.com">souvikbanerjee73@gmail.com</a>.
         </p>
           </div>
         );
@@ -1311,7 +1524,7 @@
        */
       function NotifyPage() {
         const queryDefaults = useMemo(() => {
-          const params = new URLSearchParams(window.location.search);
+          const params = getCurrentRouteParams();
           const qrParam = (params.get("qr") || "").trim();
           const idParam = (params.get("id") || "").trim();
           const vehicleParam = (params.get("vehicle") || "").trim();
@@ -1355,6 +1568,7 @@
         const [notifyTarget, setNotifyTarget] = useState({
           fcmToken: "",
           userId: "",
+          vehicleId: "",
         });
         const [notifyFeedback, setNotifyFeedback] = useState({
           message: "",
@@ -1386,14 +1600,17 @@
             ...prev,
             licensePlate: normalisedEntry,
           }));
-          const params = new URLSearchParams(window.location.search);
+          const params = getCurrentRouteParams();
           params.set("vehicle", normalisedEntry);
           params.delete("qr");
           params.delete("id");
+          const basePath = parseShortNotifyRoute(window.location.pathname)
+            ? "./index.html"
+            : window.location.pathname;
           const nextQuery = params.toString();
           const nextUrl = nextQuery
-            ? `${window.location.pathname}?${nextQuery}`
-            : window.location.pathname;
+            ? `${basePath}?${nextQuery}`
+            : basePath;
           window.history.replaceState({}, "", nextUrl);
         }, [identifierInput]);
 
@@ -1430,11 +1647,15 @@
                   : "";
               const decodedUserId =
                 typeof decoded.userId === "string" ? decoded.userId.trim() : "";
+              const decodedVehicleId =
+                typeof decoded.vehicleId === "string"
+                  ? decoded.vehicleId.trim()
+                  : "";
               const decodedQrId =
                 typeof decoded.qrCodeId === "string"
                   ? decoded.qrCodeId.trim()
                   : "";
-              if (decodedToken || decodedUserId) {
+              if (decodedToken || decodedUserId || decodedVehicleId) {
                 setNotifyTarget((prev) => {
                   const next = { ...prev };
                   if (!next.fcmToken && decodedToken) {
@@ -1442,6 +1663,9 @@
                   }
                   if (!next.userId && decodedUserId) {
                     next.userId = decodedUserId;
+                  }
+                  if (!next.vehicleId && decodedVehicleId) {
+                    next.vehicleId = decodedVehicleId;
                   }
                   return next;
                 });
@@ -1511,7 +1735,11 @@
               } else {
                 setError("");
               }
-              setNotifyTarget({ fcmToken: "", userId: "" });
+              setNotifyTarget({
+                fcmToken: "",
+                userId: "",
+                vehicleId: "",
+              });
               setNotifyFeedback({ message: "", variant: "muted" });
               setUser(null);
               setLoading(false);
@@ -1569,22 +1797,19 @@
                 : "";
             const nextUserId =
               resolvedUser.id || resolvedUser.userId || "";
+            const nextVehicleId =
+              typeof resolvedUser.vehicleId === "string"
+                ? resolvedUser.vehicleId.trim()
+                : "";
             setNotifyTarget({
               fcmToken: nextFcmToken,
               userId: nextUserId,
+              vehicleId: nextVehicleId,
             });
-            if (nextFcmToken) {
-              setNotifyFeedback({
-                message: "Ready to alert the owner instantly.",
-                variant: "muted",
-              });
-            } else {
-              setNotifyFeedback({
-                message:
-                  "The owner has not enabled push notifications yet. Try contacting them using the details on the QR card.",
-                variant: "warning",
-              });
-            }
+            setNotifyFeedback({
+              message: "Ready to alert the owner instantly.",
+              variant: "muted",
+            });
           }
           resolveId();
           return () => {
@@ -1605,34 +1830,50 @@
               setNotifyTarget({
                 fcmToken: "",
                 userId: "",
+                vehicleId: "",
               });
             }
             return () => {
               cancelled = true;
             };
           }
-          async function hydrateFromQr() {
-            const ready = await ensureFirebaseInitialised();
-            if (cancelled) {
-              return;
-            }
-            if (!ready || !functionsClient || !db) {
-              setOwnerFromQr(null);
-              setNotifyTarget({
-                fcmToken: "",
-                userId: "",
-              });
-              setNotifyFeedback({
-                message:
-                  "Notifications service is unavailable right now. Please try again later.",
-                variant: "danger",
-              });
-              return;
-            }
-            setNotifyFeedback({
-              message: "Fetching owner profile...",
-              variant: "info",
+          if (!functionsClient) {
+            setOwnerFromQr(null);
+            setNotifyTarget({
+              fcmToken: "",
+              userId: "",
+              vehicleId: "",
             });
+            setNotifyFeedback({
+              message:
+                "Notifications service is unavailable right now. Please try again later.",
+              variant: "danger",
+            });
+            return () => {
+              cancelled = true;
+            };
+          }
+          if (!db) {
+            setOwnerFromQr(null);
+            setNotifyTarget({
+              fcmToken: "",
+              userId: "",
+              vehicleId: "",
+            });
+            setNotifyFeedback({
+              message:
+                "We could not connect to the owner directory right now. Please try again shortly.",
+              variant: "danger",
+            });
+            return () => {
+              cancelled = true;
+            };
+          }
+          setNotifyFeedback({
+            message: "Fetching owner profile...",
+            variant: "info",
+          });
+          async function hydrateFromQr() {
             try {
               const owner = await fetchOwnerByQr(initialQr);
               if (cancelled) {
@@ -1650,6 +1891,7 @@
                 setNotifyTarget({
                   fcmToken: "",
                   userId: "",
+                  vehicleId: "",
                 });
                 setNotifyFeedback({
                   message:
@@ -1660,6 +1902,18 @@
               }
               setOwnerFromQr(owner);
               setError("");
+              if (!owner.isActive) {
+                setNotifyTarget({
+                  fcmToken: "",
+                  userId: owner.userId || "",
+                  vehicleId: owner.vehicleId || "",
+                });
+                setNotifyFeedback({
+                  message: "This QR code is currently inactive for notifications.",
+                  variant: "warning",
+                });
+                return;
+              }
               if (owner.carDetails && typeof owner.carDetails === "object") {
                 setCarDetails((prev) => {
                   const next = { ...prev };
@@ -1675,21 +1929,10 @@
                   return next;
                 });
               }
-              if (!owner.fcmToken) {
-                setNotifyTarget({
-                  fcmToken: "",
-                  userId: owner.userId || "",
-                });
-                setNotifyFeedback({
-                  message:
-                    "The owner has not enabled push notifications yet. Try contacting them using the details on the QR card.",
-                  variant: "warning",
-                });
-                return;
-              }
               setNotifyTarget({
                 fcmToken: owner.fcmToken,
                 userId: owner.userId || "",
+                vehicleId: owner.vehicleId || "",
               });
               setNotifyFeedback({
                 message: "Ready to alert the owner instantly.",
@@ -1723,6 +1966,7 @@
           setUser({
             id: ownerFromQr.userId || "",
             userId: ownerFromQr.userId || "",
+            vehicleId: ownerFromQr.vehicleId || "",
             qrCodeId: initialQr || "",
             carDetails: ownerFromQr.carDetails || {},
             fcmToken: ownerFromQr.fcmToken || "",
@@ -1751,28 +1995,14 @@
             notifyTarget.fcmToken || (user && user.fcmToken) || "";
           const targetUserId =
             notifyTarget.userId || (user && (user.id || user.userId)) || "";
+          const targetVehicleId =
+            notifyTarget.vehicleId || (user && user.vehicleId) || "";
           const targetQrId =
             initialQr || (user && (user.qrCodeId || user.qrId)) || identifier;
           if (!targetQrId) {
             setNotifyFeedback({
               message:
                 "We could not confirm the QR reference for this vehicle. Please refresh the page or rescan the Avahanaa QR code.",
-              variant: "warning",
-            });
-            return;
-          }
-          if (!targetUserId) {
-            setNotifyFeedback({
-              message:
-                "We could not verify the owner's Avahanaa account. Ask them to refresh their QR from the app.",
-              variant: "warning",
-            });
-            return;
-          }
-          if (!targetFcmToken) {
-            setNotifyFeedback({
-              message:
-                "The owner has not enabled push notifications yet. Try contacting them using the details on the QR card.",
               variant: "warning",
             });
             return;
@@ -1833,12 +2063,18 @@
           ) {
             metadata.color = user.carDetails.color.trim();
           }
-          metadata.userId = targetUserId;
+          if (targetUserId) {
+            metadata.userId = targetUserId;
+          }
+          if (targetVehicleId) {
+            metadata.vehicleId = targetVehicleId;
+          }
           try {
             const result = await triggerNotifyFunction({
               qrId: targetQrId,
               userId: targetUserId,
               fcmToken: targetFcmToken,
+              vehicleId: targetVehicleId,
               title,
               body: bodyMsg,
               metadata,
@@ -1931,12 +2167,12 @@
             </div>
           );
         }
-        const canRenderForm = user || ownerFromQr || notifyTarget.fcmToken;
+        const canRenderForm = user || ownerFromQr || identifier || initialQr;
         if (!canRenderForm) {
           return null;
         }
         const canNotify = Boolean(
-          notifyTarget.fcmToken || (user && user.fcmToken)
+          initialQr || identifier || (user && (user.qrCodeId || user.qrId))
         );
         const feedbackVariantClass = {
           success: "text-success",
@@ -2107,7 +2343,7 @@
        * Main App component which selects the page based on URL.
        */
       function App() {
-        const page = new URLSearchParams(window.location.search).get("page");
+        const page = getCurrentRouteParams().get("page");
         let Component;
         switch (page) {
           case "contact":

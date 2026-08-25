@@ -164,9 +164,13 @@
         </div>
         <div class="card-footer bg-white border-0 text-center text-muted small py-3">
           <div class="footer-links">
-            <a href="mailto:hello@avahanaa.com">Support</a>
+            <a href="mailto:souvikbanerjee73@gmail.com">Support</a>
             <span class="mx-2">•</span>
             <a href="index.html?page=about">About Avahanaa</a>
+            <span class="mx-2">•</span>
+            <a href="privacy-policy.html">Privacy Policy</a>
+            <span class="mx-2">•</span>
+            <a href="terms-and-conditions.html">Terms &amp; Conditions</a>
           </div>
         </div>
       </div>
@@ -179,6 +183,28 @@
     <script>
       (async function () {
         const params = new URLSearchParams(window.location.search);
+        const shortRoute = (() => {
+          const cleanPath = String(window.location.pathname || "")
+            .split("?")[0]
+            .split("#")[0]
+            .trim();
+          if (!cleanPath) {
+            return null;
+          }
+          const segments = cleanPath.split("/").filter(Boolean);
+          if (segments.length < 2) {
+            return null;
+          }
+          const prefix = segments[0].toLowerCase();
+          if (prefix !== "n" && prefix !== "notify") {
+            return null;
+          }
+          const qrId = decodeURIComponent(segments[1] || "").trim();
+          return qrId ? { qrId } : null;
+        })();
+        if (shortRoute && !params.has("qr")) {
+          params.set("qr", shortRoute.qrId);
+        }
 
         const elements = {
           status: document.getElementById("statusMessage"),
@@ -199,44 +225,26 @@
         const encoder = new TextEncoder();
         const decoder = new TextDecoder();
 
-        let firebaseConfig = null;
+        const firebaseConfig = {
+          apiKey: "AIzaSyDVB09QVh9YizQ7p1YXGcQWQ_43NV6f0SE",
+          authDomain: "congestion-free.firebaseapp.com",
+          projectId: "congestion-free",
+          storageBucket: "congestion-free.firebasestorage.app",
+          messagingSenderId: "76007537447",
+          appId: "1:76007537447:web:57a848570f39091b5a4702",
+          measurementId: "G-5PNGPJZL6D",
+        };
+
         let firestoreInstance = null;
         let functionsInstance = null;
         let analyticsInitialised = false;
         let statusPreset = null;
 
-        try {
-          const configResponse = await fetch("/api/firebase-config", {
-            method: "GET",
-            credentials: "same-origin",
-          });
-          if (!configResponse.ok) {
-            throw new Error(
-              `Config request failed (${configResponse.status || "unknown status"})`
-            );
-          }
-          const parsedConfig = await configResponse.json();
-          if (!parsedConfig || !parsedConfig.apiKey) {
-            throw new Error("Invalid Firebase config response");
-          }
-          firebaseConfig = parsedConfig;
-        } catch (error) {
-          console.error("Failed to load Firebase config", error);
-          setStatus(
-            "We could not load the notification service configuration. Please try again later.",
-            "danger"
-          );
-          if (elements.notifyButton) {
-            elements.notifyButton.disabled = true;
-            elements.notifyButton.classList.add("disabled");
-          }
-          return;
-        }
-
         const notificationState = {
           qrId: params.get("qr")?.trim() || "",
           fcmToken: "",
           userId: "",
+          vehicleId: "",
           sending: false,
           ready: false,
         };
@@ -381,19 +389,68 @@
             return null;
           }
           const clean = {};
+          const metadata =
+            parsed.metadata && typeof parsed.metadata === "object"
+              ? parsed.metadata
+              : {};
+          const vehicleDetails =
+            parsed.vehicle && typeof parsed.vehicle === "object"
+              ? parsed.vehicle
+              : parsed.carDetails && typeof parsed.carDetails === "object"
+              ? parsed.carDetails
+              : {};
+          const detailsSource = Object.keys(vehicleDetails).length
+            ? vehicleDetails
+            : parsed;
           ["color", "carModel", "licensePlate"].forEach((keyName) => {
-            const value = parsed[keyName];
+            const value = detailsSource[keyName];
             if (typeof value === "string" && value.trim()) {
-              clean[keyName] = value.trim();
+              clean[keyName] =
+                keyName === "licensePlate"
+                  ? normalisePlate(value)
+                  : value.trim();
             }
           });
+          const userId =
+            typeof parsed.userId === "string" && parsed.userId.trim()
+              ? parsed.userId.trim()
+              : typeof metadata.userId === "string"
+              ? metadata.userId.trim()
+              : "";
+          if (userId) {
+            clean.userId = userId;
+          }
+          const vehicleId =
+            typeof parsed.vehicleId === "string" && parsed.vehicleId.trim()
+              ? parsed.vehicleId.trim()
+              : typeof metadata.vehicleId === "string"
+              ? metadata.vehicleId.trim()
+              : "";
+          if (vehicleId) {
+            clean.vehicleId = vehicleId;
+          }
+          const fcmToken =
+            typeof parsed.fcmToken === "string" && parsed.fcmToken.trim()
+              ? parsed.fcmToken.trim()
+              : "";
+          if (fcmToken) {
+            clean.fcmToken = fcmToken;
+          }
+          const qrCodeId =
+            typeof parsed.qrCodeId === "string" && parsed.qrCodeId.trim()
+              ? parsed.qrCodeId.trim()
+              : typeof parsed.qrId === "string" && parsed.qrId.trim()
+              ? parsed.qrId.trim()
+              : typeof metadata.qrCodeId === "string"
+              ? metadata.qrCodeId.trim()
+              : "";
+          if (qrCodeId) {
+            clean.qrCodeId = qrCodeId;
+          }
           return Object.keys(clean).length ? clean : null;
         }
 
         function ensureFirebaseApp() {
-          if (!firebaseConfig) {
-            return null;
-          }
           if (!window.firebase || !window.firebase.apps) {
             console.warn("Firebase SDK is not available on this page.");
             return null;
@@ -476,9 +533,19 @@
               metadata.contact && typeof metadata.contact === "object"
                 ? metadata.contact
                 : {};
+            const metadataVehicle =
+              metadata.vehicle && typeof metadata.vehicle === "object"
+                ? metadata.vehicle
+                : {};
+            const metadataCarDetails =
+              metadata.carDetails && typeof metadata.carDetails === "object"
+                ? metadata.carDetails
+                : {};
             const userId = qrData.userId || metadata.userId || "";
             const owner = {
               userId,
+              vehicleId: qrData.vehicleId || metadata.vehicleId || "",
+              isActive: qrData.isActive !== false,
               contact: {
                 email:
                   typeof metadataContact.email === "string"
@@ -489,16 +556,18 @@
                     ? metadataContact.phoneNumber
                     : "",
               },
-              carDetails:
-                metadata.carDetails && typeof metadata.carDetails === "object"
-                  ? metadata.carDetails
-                  : {},
+              carDetails: Object.keys(metadataVehicle).length
+                ? metadataVehicle
+                : metadataCarDetails,
               fcmToken: "",
             };
             if (userId) {
               const userDoc = await db.collection("users").doc(userId).get();
               if (userDoc.exists) {
                 const userData = userDoc.data() || {};
+                if (userData.notificationsEnabled === false) {
+                  owner.isActive = false;
+                }
                 if (typeof userData.fcmToken === "string" && userData.fcmToken.trim()) {
                   owner.fcmToken = userData.fcmToken.trim();
                 }
@@ -521,6 +590,44 @@
                       : ""),
                 };
               }
+            }
+            if (owner.userId && owner.vehicleId) {
+              try {
+                const vehicleDoc = await db
+                  .collection("users")
+                  .doc(owner.userId)
+                  .collection("vehicles")
+                  .doc(owner.vehicleId)
+                  .get();
+                if (vehicleDoc.exists) {
+                  const vehicleData = vehicleDoc.data() || {};
+                  if (!owner.carDetails || !Object.keys(owner.carDetails).length) {
+                    owner.carDetails = {
+                      color:
+                        typeof vehicleData.color === "string" ? vehicleData.color : "",
+                      carModel:
+                        typeof vehicleData.carModel === "string"
+                          ? vehicleData.carModel
+                          : "",
+                      licensePlate:
+                        typeof vehicleData.licensePlate === "string"
+                          ? vehicleData.licensePlate
+                          : "",
+                    };
+                  }
+                  if (
+                    vehicleData.isActive === false ||
+                    vehicleData.notificationsEnabled === false
+                  ) {
+                    owner.isActive = false;
+                  }
+                }
+              } catch (vehicleLookupErr) {
+                console.warn("Vehicle details lookup failed for owner QR", vehicleLookupErr);
+              }
+            }
+            if (!owner.fcmToken && typeof qrData.fcmToken === "string") {
+              owner.fcmToken = qrData.fcmToken.trim();
             }
             return owner;
           } catch (error) {
@@ -583,6 +690,33 @@
           ? "link"
           : "none";
 
+        function applyDecodedNotifyHints(decodedPayload) {
+          if (!decodedPayload || typeof decodedPayload !== "object") {
+            return;
+          }
+          if (
+            !notificationState.userId &&
+            typeof decodedPayload.userId === "string" &&
+            decodedPayload.userId.trim()
+          ) {
+            notificationState.userId = decodedPayload.userId.trim();
+          }
+          if (
+            !notificationState.vehicleId &&
+            typeof decodedPayload.vehicleId === "string" &&
+            decodedPayload.vehicleId.trim()
+          ) {
+            notificationState.vehicleId = decodedPayload.vehicleId.trim();
+          }
+          if (
+            !notificationState.fcmToken &&
+            typeof decodedPayload.fcmToken === "string" &&
+            decodedPayload.fcmToken.trim()
+          ) {
+            notificationState.fcmToken = decodedPayload.fcmToken.trim();
+          }
+        }
+
         const payload = params.get("payload")?.trim();
         let decoded = null;
         if (payload) {
@@ -604,6 +738,7 @@
                     ? decoded.color.trim()
                     : details.color,
               });
+              applyDecodedNotifyHints(decoded);
               detailsSource = "payload";
             } else {
               statusPreset = {
@@ -632,6 +767,7 @@
                       ? decoded.color.trim()
                       : details.color,
                 });
+                applyDecodedNotifyHints(decoded);
                 detailsSource = "payload";
                 statusPreset = {
                   message:
@@ -749,10 +885,14 @@
             if (details.color) {
               metadata.color = details.color;
             }
+            if (notificationState.vehicleId) {
+              metadata.vehicleId = notificationState.vehicleId;
+            }
             const result = await triggerNotifyFunction({
               qrId,
               userId: notificationState.userId,
               fcmToken: notificationState.fcmToken,
+              vehicleId: notificationState.vehicleId,
               title,
               body,
               metadata,
@@ -780,6 +920,7 @@
           notificationState.ready = false;
           notificationState.fcmToken = "";
           notificationState.userId = "";
+          notificationState.vehicleId = "";
           if (!button) {
             return;
           }
@@ -820,6 +961,14 @@
             updateNotifyButton("disabled");
             return;
           }
+          if (!owner.isActive) {
+            setNotifyFeedback(
+              "This QR code is currently inactive for notifications.",
+              "warning"
+            );
+            updateNotifyButton("disabled");
+            return;
+          }
           let mergedDetails = false;
           if (!Object.values(details).some(Boolean) && owner.carDetails) {
             ["carModel", "licensePlate", "color"].forEach((key) => {
@@ -841,16 +990,9 @@
             };
             refreshDetailsView("metadata");
           }
-          if (!owner.fcmToken) {
-            setNotifyFeedback(
-              "The owner has not enabled push notifications yet. Try contacting them using the details on the QR card.",
-              "warning"
-            );
-            updateNotifyButton("disabled");
-            return;
-          }
           notificationState.fcmToken = owner.fcmToken;
           notificationState.userId = owner.userId || "";
+          notificationState.vehicleId = owner.vehicleId || "";
           notificationState.ready = true;
           setNotifyFeedback("Ready to alert the owner instantly.", "muted");
           updateNotifyButton("ready");
