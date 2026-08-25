@@ -340,10 +340,17 @@
           result.carDetails = cleanCarDetails;
           Object.assign(result, cleanCarDetails);
         }
-        const fcmToken = toTrimmedString(parsed.fcmToken);
-        if (fcmToken) {
-          result.fcmToken = fcmToken;
-        }
+        // Deliberately NOT carried over: `parsed.fcmToken`.
+        //
+        // The v1/v2 encrypted stickers embedded the owner's FCM token in the
+        // QR itself, which means it is printed on the windshield of every one
+        // of those vehicles. It is dropped on decode, and `/api/notify` would
+        // ignore it regardless — the server resolves the token from the QR id
+        // using its own credentials and accepts none from the client.
+        //
+        // Those stickers cannot be recalled, so this is not a fix, only a
+        // containment: the token stays valid until the owner's app rotates it.
+        // See DEPLOY.md, "Legacy encrypted stickers".
         const userId = toTrimmedString(
           parsed.userId ||
             (parsed.metadata &&
@@ -483,403 +490,215 @@
       }
 
       /**
-       * Fetches user data by QR code ID from Firestore.
-       * Assumes a collection "users" with field "qrCodeId" matching the scanned code.
-       * Returns null if no user found.
+       * ---------------------------------------------------------------
+       * Data access
+       * ---------------------------------------------------------------
+       *
+       * Everything below talks to the backend over /api/*. None of it touches
+       * Firestore.
+       *
+       * That is the whole point. The previous version of this file resolved a
+       * scan by reading `qrCodes/{id}`, then `users/{userId}`, then that
+       * user's `vehicles` subcollection — from the browser of a stranger who
+       * had just walked up to somebody's car. It pulled `fcmToken` and
+       * `phoneNumber` into the page and handed the token back to the server to
+       * push with.
+       *
+       * Two things were wrong with that. The owner's phone number was sitting
+       * in a stranger's browser, which is the exact thing this product
+       * promises never happens. And a server that accepts a token from the
+       * client will push whatever anyone sends it.
+       *
+       * So resolution and sending both moved behind the Admin SDK, and the
+       * Firestore rules now refuse these reads outright. The page below never
+       * learns who the owner is — it gets a colour, a model and a plate, the
+       * same three things already printed on the sticker.
        */
-      async function fetchUserByQrId(qrId) {
-        if (!qrId) return null;
-        // If Firestore isn't configured, return a test user for demonstration when qrId is "1".
-        if (!db) {
-          if (qrId === "1") {
-            return {
-              id: "demoUser",
-              email: "demo@avahanaa.com",
-              fcmToken: "TEST_FCM_TOKEN",
-              phoneNumber: "",
-              qrCodeId: "1",
-            };
-          }
-          return null;
+
+      /** Everything the server will tell us about a vehicle, and no more. */
+      function emptyOwnerRecord() {
+        return {
+          id: "",
+          qrCodeId: "",
+          // Retained so the components reading them keep working, and as a
+          // standing reminder that the client is never given either one.
+          fcmToken: "",
+          userId: "",
+          licensePlate: "",
+          carDetails: { color: "", carModel: "", licensePlate: "" },
+        };
+      }
+
+      function ownerRecordFromApi(data) {
+        const vehicle = (data && data.vehicle) || {};
+        const record = emptyOwnerRecord();
+        record.id = data.qrCodeId || "";
+        record.qrCodeId = data.qrCodeId || "";
+        record.licensePlate = vehicle.licensePlate || "";
+        record.carDetails = {
+          color: vehicle.color || "",
+          carModel: vehicle.carModel || "",
+          licensePlate: vehicle.licensePlate || "",
+        };
+        return record;
+      }
+
+      /**
+       * A missing code and a deactivated code deliberately look identical.
+       *
+       * `isActive: false` is the owner's off switch and the server honours it,
+       * but if this page said "that code exists but is switched off" it would
+       * become a way to test which codes are real.
+       */
+      const NOT_ACTIVE_MESSAGE =
+        "This code is not active. Please check you scanned an Avahanaa sticker.";
+
+      /**
+       * In-flight GETs, keyed by path.
+       *
+       * Two effects resolve the same QR on mount — one to fill the vehicle
+       * description, one to arm the notify target — so without this the page
+       * opens with two identical round trips. On a normal page that is
+       * untidy; here it is the first thing that happens after someone scans a
+       * sticker, on Indian mobile data, while they are standing in the road.
+       *
+       * Only the promise is shared, and only while it is pending, so a later
+       * resolve still re-fetches. Nothing is cached across attempts — a code
+       * that was deactivated between two tries must come back 404.
+       */
+      const inFlightGets = new Map();
+
+      async function apiGet(path) {
+        if (inFlightGets.has(path)) return inFlightGets.get(path);
+        const pending = apiGetUncached(path).finally(() => {
+          inFlightGets.delete(path);
+        });
+        inFlightGets.set(path, pending);
+        return pending;
+      }
+
+      async function apiGetUncached(path) {
+        const response = await fetch(path, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        });
+        if (response.status === 404) return null;
+        if (!response.ok) {
+          const detail = await response.json().catch(() => null);
+          throw new Error(
+            (detail && detail.error && detail.error.message) ||
+              "We could not reach Avahanaa. Please check your connection."
+          );
         }
+        return response.json();
+      }
+
+      /**
+       * Resolves a scanned QR code to its vehicle description.
+       */
+      async function fetchOwnerByQr(qrCodeId) {
+        if (!qrCodeId) return null;
         try {
-          const snapshot = await db
-            .collection("users")
-            .where("qrCodeId", "==", qrId)
-            .get();
-          if (snapshot.empty) return null;
-          // Return first match
-          const doc = snapshot.docs[0];
-          return { id: doc.id, ...doc.data() };
+          const data = await apiGet(
+            `/api/qr/${encodeURIComponent(qrCodeId)}`
+          );
+          return data ? ownerRecordFromApi(data) : null;
         } catch (error) {
-          console.error("Error fetching user by QR id:", error);
+          console.error("Could not resolve QR code", error);
           return null;
         }
       }
 
+      /** Kept under its old name so existing call sites are unchanged. */
+      async function fetchUserByQrId(qrId) {
+        return fetchOwnerByQr(qrId);
+      }
+
       /**
-       * Fetches user data by either QR code ID or vehicle number (license plate).
-       * If Firestore is not configured, falls back to a demo user when a matching
-       * identifier is provided. When Firestore is available, it first queries
-       * the "users" collection for a matching `qrCodeId`. If no result is found
-       * it then tries to match a `licensePlate` or `vehicleNumber` field. You
-       * should ensure that license plates in Firestore are stored in a
-       * normalised format (e.g. uppercase without separators) to allow direct
-       * equality matching since Firestore does not support case‑insensitive
-       * queries. The lookup tries both the uppercased value and a canonical
-       * variant with non‑alphanumeric characters removed. When multiple matches
-       * are found, the first record is used.
+       * Resolves either a QR id or a typed registration number.
        *
-       * @param {string} identifier QR code ID or vehicle number
-       * @returns {Promise<Object|null>} user document or null if not found
+       * The plate branch is a server lookup now (`/api/lookup`) rather than a
+       * Firestore query over `users`. It answers with a `qrCodeId` and the
+       * vehicle description — never an owner — and it is rate-limited per IP,
+       * because unlike a sticker a plate can simply be guessed.
        */
       async function fetchUserByIdOrPlate(identifier) {
         if (!identifier) return null;
-        const rawId = identifier.trim();
-        // Keep rawId for exact QR doc lookups, and normalise variants for plate matching.
-        const normId = rawId.toUpperCase();
-        const canonicalId = canonicalisePlate(identifier);
-        const lookupCandidates = Array.from(
-          new Set([rawId, normId, canonicalId].filter(Boolean))
-        );
-        // Demo fallback when Firestore is not set up
-        if (!db) {
-          // In demo mode we map id "1" or license "KA 01 ** 1234" to a test user
-          const demoPlates = ["1", "KA 01 ** 1234", "KA01**1234", "KA01** 1234"];
-          const matchesDemo = lookupCandidates.some((candidate) =>
-            demoPlates.includes(candidate)
+        const raw = String(identifier).trim();
+        if (!raw) return null;
+
+        // A QR id first: if the scan route gave us one, it is authoritative.
+        const direct = await fetchOwnerByQr(raw);
+        if (direct) return direct;
+
+        try {
+          const data = await apiGet(
+            `/api/lookup?plate=${encodeURIComponent(raw)}`
           );
-          if (matchesDemo) {
-            return {
-              id: "demoUser",
-              name: "Demo User",
-              licensePlate: "KA 01 ** 1234",
-              car: "Test Car",
-              fcmToken: "TEST_FCM_TOKEN",
-              qrCodeId: "1",
-            };
-          }
-          return null;
-        }
-        try {
-          // First try direct lookup in qrCodes collection by document ID.
-          for (const candidate of lookupCandidates) {
-            const qrDoc = await db.collection("qrCodes").doc(candidate).get();
-            if (!qrDoc.exists) {
-              continue;
-            }
-            const qrData = qrDoc.data() || {};
-            const metadata =
-              qrData.metadata && typeof qrData.metadata === "object"
-                ? qrData.metadata
-                : {};
-            const userId = (qrData.userId || metadata.userId || "").trim();
-            if (!userId) {
-              continue;
-            }
-            const userDoc = await db.collection("users").doc(userId).get();
-            if (!userDoc.exists) {
-              continue;
-            }
-            const userData = userDoc.data() || {};
-            let vehicleDetails = {};
-            const vehicleId = (qrData.vehicleId || metadata.vehicleId || "").trim();
-            if (vehicleId) {
-              try {
-                const vehicleDoc = await db
-                  .collection("users")
-                  .doc(userId)
-                  .collection("vehicles")
-                  .doc(vehicleId)
-                  .get();
-                if (vehicleDoc.exists) {
-                  const vehicleData = vehicleDoc.data() || {};
-                  vehicleDetails = {
-                    color: vehicleData.color || "",
-                    carModel: vehicleData.carModel || "",
-                    licensePlate: vehicleData.licensePlate || "",
-                  };
-                }
-              } catch (vehicleLookupErr) {
-                console.warn("Vehicle details lookup failed for QR", vehicleLookupErr);
-              }
-            }
-            return {
-              id: userId,
-              ...userData,
-              userId,
-              vehicleId,
-              qrCodeId: candidate,
-              carDetails:
-                Object.keys(vehicleDetails).length
-                  ? vehicleDetails
-                  : userData.carDetails || {},
-              fcmToken:
-                (typeof userData.fcmToken === "string" && userData.fcmToken.trim()) ||
-                (typeof qrData.fcmToken === "string" ? qrData.fcmToken.trim() : "") ||
-                "",
-            };
-          }
-
-          // Legacy fallback: try users.qrCodeId.
-          let snapshot = await db
-            .collection("users")
-            .where("qrCodeId", "==", identifier)
-            .limit(1)
-            .get();
-          if (!snapshot.empty) {
-            const doc = snapshot.docs[0];
-            return { id: doc.id, ...doc.data() };
-          }
-
-          // Multi-vehicle lookup by plate or asset number via collectionGroup.
-          const vehicleFields = ["licensePlate", "assetNumber"];
-          for (const field of vehicleFields) {
-            for (const candidate of lookupCandidates) {
-              snapshot = await db
-                .collectionGroup("vehicles")
-                .where(field, "==", candidate)
-                .limit(1)
-                .get();
-              if (snapshot.empty) {
-                continue;
-              }
-              const vehicleDoc = snapshot.docs[0];
-              const vehicleData = vehicleDoc.data() || {};
-              const parentDocRef =
-                vehicleDoc.ref.parent && vehicleDoc.ref.parent.parent
-                  ? vehicleDoc.ref.parent.parent
-                  : null;
-              const ownerUserId = (
-                vehicleData.userId ||
-                (parentDocRef ? parentDocRef.id : "")
-              ).trim();
-              if (!ownerUserId) {
-                continue;
-              }
-              const userDoc = await db.collection("users").doc(ownerUserId).get();
-              const userData = userDoc.exists ? userDoc.data() || {} : {};
-              return {
-                id: ownerUserId,
-                ...userData,
-                userId: ownerUserId,
-                vehicleId: vehicleDoc.id,
-                qrCodeId:
-                  vehicleData.qrCodeId ||
-                  userData.qrCodeId ||
-                  "",
-                carDetails: {
-                  color:
-                    typeof vehicleData.color === "string" ? vehicleData.color : "",
-                  carModel:
-                    typeof vehicleData.carModel === "string"
-                      ? vehicleData.carModel
-                      : "",
-                  licensePlate:
-                    typeof vehicleData.licensePlate === "string"
-                      ? vehicleData.licensePlate
-                      : "",
-                },
-                fcmToken:
-                  typeof userData.fcmToken === "string"
-                    ? userData.fcmToken.trim()
-                    : "",
-              };
-            }
-          }
-
-          // Next try by license plate (normalised). Fields may be named differently; try common names
-          const plateFields = [
-            "licensePlate",
-            "vehicleNumber",
-            "plateNumber",
-            "carNumber",
-            "carDetails.licensePlate",
-            "carDetails.vehicleNumber",
-          ];
-          for (const field of plateFields) {
-            for (const candidate of lookupCandidates) {
-              snapshot = await db
-                .collection("users")
-                .where(field, "==", candidate)
-                .limit(1)
-                .get();
-              if (!snapshot.empty) {
-                const doc = snapshot.docs[0];
-                return { id: doc.id, ...doc.data() };
-              }
-            }
-          }
-          // If no match, return null
-          return null;
+          return data ? ownerRecordFromApi(data) : null;
         } catch (error) {
-          console.error("Error fetching user by identifier:", error);
-          return null;
-        }
-      }
-
-      async function fetchOwnerByQr(qrCodeId) {
-        if (!qrCodeId) return null;
-        if (!db) {
-          if (qrCodeId === "1") {
-            return {
-              userId: "demoUser",
-              vehicleId: "demoVehicle",
-              isActive: true,
-              fcmToken: "TEST_FCM_TOKEN",
-              carDetails: {
-                carModel: "Test Car",
-                licensePlate: "KA 01 ** 1234",
-                color: "Blue",
-              },
-            };
-          }
-          return null;
-        }
-        try {
-          const qrDoc = await db.collection("qrCodes").doc(qrCodeId).get();
-          if (!qrDoc.exists) {
-            return null;
-          }
-          const qrData = qrDoc.data() || {};
-          const metadata =
-            qrData.metadata && typeof qrData.metadata === "object"
-              ? qrData.metadata
-              : {};
-          const metadataVehicle =
-            metadata.vehicle && typeof metadata.vehicle === "object"
-              ? metadata.vehicle
-              : {};
-          const metadataCarDetails =
-            metadata.carDetails && typeof metadata.carDetails === "object"
-              ? metadata.carDetails
-              : {};
-          const metadataContact =
-            metadata.contact && typeof metadata.contact === "object"
-              ? metadata.contact
-              : {};
-          const owner = {
-            userId: qrData.userId || metadata.userId || "",
-            vehicleId: qrData.vehicleId || metadata.vehicleId || "",
-            isActive: qrData.isActive !== false,
-            fcmToken: "",
-            contact: {
-              email:
-                typeof metadataContact.email === "string"
-                  ? metadataContact.email
-                  : "",
-              phoneNumber:
-                typeof metadataContact.phoneNumber === "string"
-                  ? metadataContact.phoneNumber
-                  : "",
-            },
-            carDetails: Object.keys(metadataVehicle).length
-              ? metadataVehicle
-              : metadataCarDetails,
-          };
-          if (owner.userId) {
-            const userDoc = await db.collection("users").doc(owner.userId).get();
-            if (userDoc.exists) {
-              const userData = userDoc.data() || {};
-              if (userData.notificationsEnabled === false) {
-                owner.isActive = false;
-              }
-              if (typeof userData.fcmToken === "string" && userData.fcmToken.trim()) {
-                owner.fcmToken = userData.fcmToken.trim();
-              }
-              if (
-                (!owner.carDetails || !Object.keys(owner.carDetails).length) &&
-                userData.carDetails &&
-                typeof userData.carDetails === "object"
-              ) {
-                owner.carDetails = userData.carDetails;
-              }
-              if (!owner.contact.email && typeof userData.email === "string") {
-                owner.contact.email = userData.email;
-              }
-              if (
-                !owner.contact.phoneNumber &&
-                typeof userData.phoneNumber === "string"
-              ) {
-                owner.contact.phoneNumber = userData.phoneNumber;
-              }
-            }
-          }
-          if (owner.userId && owner.vehicleId) {
-            try {
-              const vehicleDoc = await db
-                .collection("users")
-                .doc(owner.userId)
-                .collection("vehicles")
-                .doc(owner.vehicleId)
-                .get();
-              if (vehicleDoc.exists) {
-                const vehicleData = vehicleDoc.data() || {};
-                if (!owner.carDetails || !Object.keys(owner.carDetails).length) {
-                  owner.carDetails = {
-                    color:
-                      typeof vehicleData.color === "string" ? vehicleData.color : "",
-                    carModel:
-                      typeof vehicleData.carModel === "string"
-                        ? vehicleData.carModel
-                        : "",
-                    licensePlate:
-                      typeof vehicleData.licensePlate === "string"
-                        ? vehicleData.licensePlate
-                        : "",
-                  };
-                }
-                if (
-                  vehicleData.isActive === false ||
-                  vehicleData.notificationsEnabled === false
-                ) {
-                  owner.isActive = false;
-                }
-              }
-            } catch (vehicleLookupErr) {
-              console.warn("Vehicle details lookup failed for owner QR", vehicleLookupErr);
-            }
-          }
-          if (!owner.fcmToken && typeof qrData.fcmToken === "string") {
-            owner.fcmToken = qrData.fcmToken.trim();
-          }
-          return owner;
-        } catch (error) {
-          console.error("Error fetching owner profile for QR", error);
+          console.error("Could not look up that registration number", error);
           return null;
         }
       }
 
       /**
-       * Invokes the notifyOwner Cloud Function to deliver push notifications.
+       * Sends the alert.
+       *
+       * The request carries a QR id, a reason code and a note — that is all
+       * the server accepts. It resolves the owner itself and pushes with its
+       * own credentials, so there is no title, no body and no token here to
+       * tamper with.
        */
       async function triggerNotifyFunction(payload) {
-        if (!functionsClient) {
-          return {
-            ok: false,
-            message: "Notifications service is not configured. Please check Firebase setup.",
-          };
-        }
         try {
-          const callable = functionsClient.httpsCallable("notifyOwner");
-          const response = await callable(payload);
-          const result = (response && response.data) || {};
-          if (result.ok) {
-            return { ok: true };
+          const response = await fetch("/api/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              qrCodeId: payload.qrCodeId || payload.qrId || "",
+              reason: payload.reason || "other",
+              message: payload.message || "",
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json().catch(() => ({}));
+            return { ok: true, notificationId: data.notificationId || "" };
           }
-          return {
-            ok: false,
-            message: result.message || "Failed to deliver notification.",
-          };
-        } catch (error) {
-          console.error("Notification function error:", error);
-          const details = error?.details;
+
+          const detail = await response.json().catch(() => null);
+          const code = detail && detail.error && detail.error.code;
+
+          // The owner has been alerted already and this is a repeat within the
+          // window. Saying so plainly matters: someone standing at the car who
+          // thinks nothing happened will keep pressing the button.
+          if (response.status === 429) {
+            return {
+              ok: false,
+              alreadyAlerted: true,
+              message:
+                "The owner has already been alerted about this vehicle and is on their way. Please give them a few minutes.",
+            };
+          }
+
+          if (response.status === 404) {
+            return { ok: false, message: NOT_ACTIVE_MESSAGE };
+          }
+
           return {
             ok: false,
             message:
-              (details && details.message) ||
-              error?.message ||
-              "Notification request failed.",
+              (detail && detail.error && detail.error.message) ||
+              "We could not send that alert. Please try again.",
+            code: code || "",
+          };
+        } catch (error) {
+          console.error("Notification request failed", error);
+          return {
+            ok: false,
+            message:
+              "We could not reach Avahanaa. Please check your connection and try again.",
           };
         }
       }
@@ -1991,12 +1810,9 @@
         async function handleSubmit(e) {
           e.preventDefault();
           if (sending) return;
-          const targetFcmToken =
-            notifyTarget.fcmToken || (user && user.fcmToken) || "";
-          const targetUserId =
-            notifyTarget.userId || (user && (user.id || user.userId)) || "";
-          const targetVehicleId =
-            notifyTarget.vehicleId || (user && user.vehicleId) || "";
+          // No token, no userId, no vehicleId assembled here any more. The
+          // server derives all three from the QR id, which is the only thing
+          // it now trusts from this page.
           const targetQrId =
             initialQr || (user && (user.qrCodeId || user.qrId)) || identifier;
           if (!targetQrId) {
@@ -2063,21 +1879,11 @@
           ) {
             metadata.color = user.carDetails.color.trim();
           }
-          if (targetUserId) {
-            metadata.userId = targetUserId;
-          }
-          if (targetVehicleId) {
-            metadata.vehicleId = targetVehicleId;
-          }
           try {
             const result = await triggerNotifyFunction({
-              qrId: targetQrId,
-              userId: targetUserId,
-              fcmToken: targetFcmToken,
-              vehicleId: targetVehicleId,
-              title,
-              body: bodyMsg,
-              metadata,
+              qrCodeId: targetQrId,
+              reason: reasonCode,
+              message: bodyMsg,
             });
             if (result.ok) {
               setNotifyFeedback({

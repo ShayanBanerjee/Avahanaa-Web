@@ -1,0 +1,133 @@
+rules_version = '2';
+
+// Avahanaa security rules.
+//
+// The product promise is that a stranger who scans a sticker learns nothing
+// about the owner — no phone number, no email, no name, not even indirectly.
+// These rules are the enforcement of that promise, so they are deliberately
+// stricter than "make the app work".
+//
+// The shape that matters:
+//
+//   * Everything under users/ is private to that user. Full stop.
+//   * qrCodes/ is readable by NOBODY from a client, including the scan page.
+//     The scan page goes through the `resolveQr` Cloud Function, which runs on
+//     the Admin SDK and returns only vehicle-scoped fields. Public reads here
+//     would let anyone enumerate the collection and harvest plate numbers.
+//   * notifications/ can never be created by a client. Only the `notify`
+//     function writes them, which is what makes rate limiting meaningful — a
+//     client-writable collection would just be bypassed.
+//
+// The Admin SDK bypasses all of this, which is why the functions are the only
+// thing that touches the public path.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // -- Users ------------------------------------------------------------
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      // The FCM token lives here, so a write by anyone else would let an
+      // attacker redirect a stranger's alerts to their own device.
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+
+      match /vehicles/{vehicleId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // -- QR codes ---------------------------------------------------------
+    //
+    // Top-level rather than nested under the owner, because the scan page must
+    // resolve a code without knowing whose it is. That makes the read rule the
+    // sensitive one: it is closed, and resolution happens server-side.
+    match /qrCodes/{qrCodeId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        // Owner contact information must never land in this document — it is
+        // the one collection a public code path reads.
+        && !request.resource.data.keys().hasAny(
+             ['email', 'phoneNumber', 'fcmToken', 'name']
+           );
+
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && !request.resource.data.keys().hasAny(
+             ['email', 'phoneNumber', 'fcmToken', 'name']
+           );
+
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // -- Notifications ----------------------------------------------------
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Written only by the `notify` function via the Admin SDK. A client that
+      // could create these could ring any owner's phone at will.
+      allow create: if false;
+
+      // The owner may mark an alert read, and nothing else. Locking the other
+      // fields keeps the audit trail honest: a notification cannot be edited
+      // into saying something different after the fact.
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['read', 'readAt', 'status']);
+
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // -- Rate limiting ----------------------------------------------------
+    //
+    // Server-side bookkeeping for the notify endpoint. No client has any
+    // business reading or writing it.
+    match /rateLimits/{bucket} {
+      allow read, write: if false;
+    }
+
+    // -- Contact form -----------------------------------------------------
+    //
+    // The marketing site's contact form, written straight from the browser by
+    // someone who is not signed in. That is fine — it is a write-only inbox —
+    // but it has to stay write-only and bounded, or it becomes a free place to
+    // store arbitrary data and a way to read other people's messages.
+    match /contactMessages/{messageId} {
+      allow read, update, delete: if false;
+
+      allow create: if
+        // Exactly these keys, nothing smuggled alongside.
+        request.resource.data.keys().hasOnly(
+          ['name', 'email', 'message', 'createdAt', 'source']
+        )
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 200
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 4000
+        && request.resource.data.source == 'web-contact'
+        // Server time only, so the inbox cannot be back- or post-dated.
+        && request.resource.data.createdAt == request.time;
+    }
+
+    // Anything not named above is denied. New collections have to opt in here
+    // deliberately rather than inheriting a permissive default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

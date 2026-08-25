@@ -1,7 +1,7 @@
 {
   "name": "avahanaa-functions",
   "version": "1.0.0",
-  "description": "Firebase Cloud Functions for Avahanaa notifications.",
+  "description": "Scan-to-alert backend for Avahanaa (avahanaa.com).",
   "main": "index.js",
   "engines": {
     "node": "20"
@@ -9,5 +9,10 @@
   "dependencies": {
     "firebase-admin": "^13.5.0",
     "firebase-functions": "^6.6.0"
+  },
+  "private": true,
+  "scripts": {
+    "serve": "firebase emulators:start --only functions,firestore,hosting",
+    "logs": "firebase functions:log"
   }
 }
