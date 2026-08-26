@@ -17,6 +17,8 @@
  * for months, and QR URLs printed on windshields are effectively permanent.
  */
 
+const crypto = require("node:crypto");
+
 const { onRequest } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
@@ -79,6 +81,28 @@ const TITLES = {
  * itself on the right channel.
  */
 const ALERT_CHANNEL = "avahanaa_critical_alerts_v2";
+
+/**
+ * What the person at the vehicle is shown when the owner answers.
+ *
+ * Mirrors `AlertReply` in `lib/models/alert_reply.dart`. The app writes the
+ * id; this map is the only place it is turned into words a stranger reads, so
+ * the two sides can never disagree about phrasing.
+ *
+ * An id that is not here means the app is newer than this deploy. That falls
+ * back to a plain acknowledgement, which says less than intended and never
+ * more — the safe direction.
+ */
+const REPLY_LABELS = {
+  omw_now: "The owner is on their way now",
+  omw_5: "The owner is on their way — about 5 minutes",
+  omw_15: "The owner is on their way — about 15 minutes",
+  cannot_come: "The owner has seen this but can't get there right now",
+  seen: "The owner has seen your alert",
+};
+
+/** Replies that mean somebody is actually coming. */
+const REPLY_ON_THE_WAY = new Set(["omw_now", "omw_5", "omw_15"]);
 
 /**
  * Rate limit per QR code.
@@ -354,6 +378,13 @@ exports.notify = onRequest(async (req, res) => {
   // being identical in both places.
   const ref = db.collection("notifications").doc();
 
+  // The scan page needs to come back and ask whether the owner replied, but it
+  // has no account and Firestore refuses it outright. So it gets a capability:
+  // an unguessable token, handed over once, that only unlocks this one alert's
+  // reply status. Without it `/api/status` would be an enumeration oracle over
+  // every notification ever sent.
+  const statusToken = crypto.randomBytes(24).toString("base64url");
+
   await ref.set({
     qrCodeId: qr.id,
     userId: qr.userId,
@@ -365,6 +396,9 @@ exports.notify = onRequest(async (req, res) => {
     read: false,
     sentAt: Timestamp.now(),
     readAt: null,
+    statusToken,
+    acknowledgedAt: null,
+    acknowledgementEta: "",
   });
 
   logger.info("alert queued", { notificationId: ref.id, reason });
@@ -379,7 +413,71 @@ exports.notify = onRequest(async (req, res) => {
   // sees this. Losing the push is recoverable; losing the record is not.
   //
   // Delivery, with the full backoff, is `deliverAlert` below.
-  res.json({ ok: true, notificationId: ref.id });
+  res.json({ ok: true, notificationId: ref.id, statusToken });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/status?id=...&t=...
+// ---------------------------------------------------------------------------
+
+/**
+ * Has the owner answered yet?
+ *
+ * The other half of the product. Someone is standing next to a stranger's car
+ * deciding how annoyed to be; "the owner is on their way, about 5 minutes" is
+ * the thing that ends that. It costs nothing to send and it is the entire
+ * reason the alert was worth delivering fast.
+ *
+ * Answers only two things — whether a reply exists and what it says — and
+ * requires the capability token minted at notify time, so it cannot be walked.
+ * Nothing about the owner is in the response: not a name, not a token, not
+ * even the userId.
+ */
+exports.status = onRequest(async (req, res) => {
+  if (cors(req, res)) return;
+  if (req.method !== "GET") return fail(res, 405, "method_not_allowed", "Use GET.");
+
+  const id = typeof req.query.id === "string" ? req.query.id.trim() : "";
+  const token = typeof req.query.t === "string" ? req.query.t.trim() : "";
+  if (!id || !token) {
+    return fail(res, 404, "not_found", "Unknown alert.");
+  }
+
+  const snap = await db.collection("notifications").doc(id).get();
+  if (!snap.exists) {
+    return fail(res, 404, "not_found", "Unknown alert.");
+  }
+
+  const alert = snap.data();
+  const expected = alert.statusToken || "";
+
+  // Constant-time compare. The tokens are the same length by construction, and
+  // an early-exit compare on a pollable endpoint is a byte-at-a-time oracle.
+  const a = Buffer.from(token);
+  const b = Buffer.from(expected);
+  if (!expected || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    // Same answer as a missing alert, so a wrong token cannot confirm that the
+    // id was real.
+    return fail(res, 404, "not_found", "Unknown alert.");
+  }
+
+  const replyId = alert.acknowledgementEta || "";
+  const acknowledged = Boolean(alert.acknowledgedAt);
+
+  // Never cached. The whole value of this endpoint is that the answer changes.
+  res.set("Cache-Control", "no-store");
+  res.json({
+    delivered: alert.status === "delivered",
+    acknowledged,
+    reply: acknowledged
+      ? {
+          id: replyId,
+          label: REPLY_LABELS[replyId] || REPLY_LABELS.seen,
+          onTheWay: REPLY_ON_THE_WAY.has(replyId),
+          at: alert.acknowledgedAt.toDate().toISOString(),
+        }
+      : null,
+  });
 });
 
 // ---------------------------------------------------------------------------

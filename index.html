@@ -520,6 +520,11 @@
         return {
           id: "",
           qrCodeId: "",
+          // The server is the authority on this and answers 404 for a code
+          // that is missing *or* switched off, so anything we hold a record
+          // for is active by definition. Kept as a field because the render
+          // path below still reads it.
+          isActive: true,
           // Retained so the components reading them keep working, and as a
           // standing reminder that the client is never given either one.
           fcmToken: "",
@@ -664,7 +669,15 @@
 
           if (response.ok) {
             const data = await response.json().catch(() => ({}));
-            return { ok: true, notificationId: data.notificationId || "" };
+            return {
+              ok: true,
+              notificationId: data.notificationId || "",
+              // The capability that lets this page ask, later, whether the
+              // owner answered. Held in memory only — it is deliberately not
+              // put in the URL or in storage, because it unlocks one alert's
+              // reply status and a URL gets shared.
+              statusToken: data.statusToken || "",
+            };
           }
 
           const detail = await response.json().catch(() => null);
@@ -1380,6 +1393,9 @@
         const [contact, setContact] = useState("");
         const [shareContact, setShareContact] = useState(false);
         const [sent, setSent] = useState(false);
+        const [statusHandle, setStatusHandle] = useState(null);
+        const [ownerReply, setOwnerReply] = useState(null);
+        const [waitedOut, setWaitedOut] = useState(false);
         const [sending, setSending] = useState(false);
         const [carDetails, setCarDetails] = useState(() => ({
           ...queryDefaults.directDetails,
@@ -1713,8 +1729,7 @@
                   vehicleId: "",
                 });
                 setNotifyFeedback({
-                  message:
-                    "This QR code is not yet linked to an owner profile. Ask them to open the Avahanaa app.",
+                  message: NOT_ACTIVE_MESSAGE,
                   variant: "warning",
                 });
                 return;
@@ -1807,6 +1822,60 @@
           "Other (I’ll type a quick note)": "other",
         };
 
+        // Wait for the owner to answer.
+        //
+        // Polled rather than streamed on purpose: the Firestore rules refuse
+        // this page outright, which is what stopped it reading the owner's
+        // record, so there is no listener to attach. `/api/status` answers with
+        // the reply and nothing else.
+        //
+        // Four seconds is slow enough to be cheap and fast enough that the
+        // answer feels immediate to someone staring at the screen. It stops on
+        // the first reply, and gives up after ten minutes — past that the
+        // person has walked away, and a page left polling in a backgrounded tab
+        // is just battery.
+        useEffect(() => {
+          if (!statusHandle || ownerReply) return undefined;
+
+          let cancelled = false;
+          let timer = null;
+          const startedAt = Date.now();
+          const GIVE_UP_AFTER_MS = 10 * 60 * 1000;
+
+          async function check() {
+            if (cancelled) return;
+
+            if (Date.now() - startedAt > GIVE_UP_AFTER_MS) {
+              setWaitedOut(true);
+              return;
+            }
+
+            try {
+              const data = await apiGet(
+                `/api/status?id=${encodeURIComponent(statusHandle.id)}` +
+                  `&t=${encodeURIComponent(statusHandle.token)}`
+              );
+              if (cancelled) return;
+              if (data && data.acknowledged && data.reply) {
+                setOwnerReply(data.reply);
+                return;
+              }
+            } catch (error) {
+              // A failed poll is not worth showing anyone. The alert is
+              // already delivered and recorded; this is only the reply.
+              console.debug("status poll failed", error);
+            }
+
+            if (!cancelled) timer = setTimeout(check, 4000);
+          }
+
+          timer = setTimeout(check, 2500);
+          return () => {
+            cancelled = true;
+            if (timer) clearTimeout(timer);
+          };
+        }, [statusHandle, ownerReply]);
+
         async function handleSubmit(e) {
           e.preventDefault();
           if (sending) return;
@@ -1891,6 +1960,12 @@
                   "Notification sent successfully to the owner's device.",
                 variant: "success",
               });
+              if (result.notificationId && result.statusToken) {
+                setStatusHandle({
+                  id: result.notificationId,
+                  token: result.statusToken,
+                });
+              }
               setSent(true);
             } else {
               const failureMessage =
@@ -1964,12 +2039,85 @@
           );
         }
         if (sent) {
+          // This screen is the point of the product.
+          //
+          // Someone is standing next to a stranger's car, annoyed, deciding
+          // how annoyed to be. "Sent successfully" — which is all this used to
+          // say — answers a question they did not ask. What they want to know
+          // is whether anybody is actually coming, and the moment they can see
+          // that, the situation defuses itself. So the page waits with them.
+          const onTheWay = ownerReply && ownerReply.onTheWay;
+
           return (
-            <div className="container py-5 text-center">
-              <div className="alert alert-success">
-                Your notification was sent successfully. The owner has been notified.
+            <div className="container py-5">
+              <div className="row justify-content-center">
+                <div className="col-12 col-md-8 col-lg-6">
+                  <div className="card shadow-sm border-0">
+                    <div className="card-body text-center p-4 p-md-5">
+                      {ownerReply ? (
+                        <>
+                          <div
+                            className={`display-4 mb-3 ${
+                              onTheWay ? "text-success" : "text-warning"
+                            }`}
+                            aria-hidden="true"
+                          >
+                            {onTheWay ? "\u{1F697}" : "\u{1F440}"}
+                          </div>
+                          <h2 className="h4 mb-3">{ownerReply.label}</h2>
+                          <p className="text-muted mb-4">
+                            {onTheWay
+                              ? "Thanks for letting them know \u2014 you can wait or head off, whichever suits you."
+                              : "They have seen your message. Thanks for taking the trouble to send it."}
+                          </p>
+                        </>
+                      ) : waitedOut ? (
+                        <>
+                          <div className="display-4 mb-3 text-success" aria-hidden="true">
+                            {"\u2714\uFE0F"}
+                          </div>
+                          <h2 className="h4 mb-3">The owner has been alerted</h2>
+                          <p className="text-muted mb-4">
+                            They have not replied yet, but the alert reached their
+                            phone and it keeps reminding them until they open it.
+                            Thanks for taking the trouble to send it.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="display-4 mb-3 text-success" aria-hidden="true">
+                            {"\u2714\uFE0F"}
+                          </div>
+                          <h2 className="h4 mb-3">The owner has been alerted</h2>
+                          <p className="text-muted mb-2">
+                            Their phone is ringing now. Hang on a moment and this
+                            page will tell you when they answer.
+                          </p>
+                          <div
+                            className="d-flex align-items-center justify-content-center gap-2 text-muted mb-4"
+                            role="status"
+                            aria-live="polite"
+                          >
+                            <span
+                              className="spinner-border spinner-border-sm"
+                              aria-hidden="true"
+                            ></span>
+                            <span className="small">Waiting for a reply…</span>
+                          </div>
+                        </>
+                      )}
+
+                      <p className="small text-muted mb-4">
+                        Your details were never shared with the owner, and theirs
+                        were never shared with you.
+                      </p>
+                      <a href="./index.html" className="btn btn-outline-secondary">
+                        Done
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <a href="./index.html" className="btn btn-primary">Back to Home</a>
             </div>
           );
         }

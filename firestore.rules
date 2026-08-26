@@ -79,13 +79,22 @@ service cloud.firestore {
       // could create these could ring any owner's phone at will.
       allow create: if false;
 
-      // The owner may mark an alert read, and nothing else. Locking the other
-      // fields keeps the audit trail honest: a notification cannot be edited
-      // into saying something different after the fact.
+      // The owner may mark an alert read and reply to it, and nothing else.
+      // Locking the other fields keeps the audit trail honest: a notification
+      // cannot be edited into saying something different after the fact.
+      //
+      // `statusToken` is deliberately absent from this list. It is minted by
+      // the notify function and handed once to the scan page; if the owner
+      // could rewrite it they could silently cut off the person waiting at
+      // their vehicle, which is the one party here with no account and no
+      // recourse.
       allow update: if isSignedIn()
         && resource.data.userId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['read', 'readAt', 'status']);
+             .hasOnly([
+               'read', 'readAt', 'status',
+               'acknowledgedAt', 'acknowledgementEta',
+             ]);
 
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }

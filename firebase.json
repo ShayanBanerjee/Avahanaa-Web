@@ -52,6 +52,11 @@
         "region": "asia-south1"
       },
       {
+        "source": "/api/status",
+        "function": "status",
+        "region": "asia-south1"
+      },
+      {
         "source": "/n/**",
         "destination": "/index.html"
       },
@@ -99,6 +104,9 @@
     ]
   },
   "emulators": {
+    "auth": {
+      "port": 9099
+    },
     "firestore": {
       "port": 8080
     },
