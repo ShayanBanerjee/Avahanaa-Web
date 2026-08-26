@@ -105,6 +105,15 @@ const REPLY_LABELS = {
 const REPLY_ON_THE_WAY = new Set(["omw_now", "omw_5", "omw_15"]);
 
 /**
+ * Roughly how long, in minutes. Mirrors `AlertReply.etaMinutes` in the app.
+ *
+ * Sent so the page can count down rather than show a fixed sentence. Treated
+ * as an estimate everywhere and never as a promise — the countdown runs to
+ * zero and then says the owner should be arriving, not that they have.
+ */
+const REPLY_ETA_MINUTES = { omw_now: 1, omw_5: 5, omw_15: 15 };
+
+/**
  * Rate limit per QR code.
  *
  * An unauthenticated endpoint that fires a max-importance alarm on a
@@ -474,6 +483,7 @@ exports.status = onRequest(async (req, res) => {
           id: replyId,
           label: REPLY_LABELS[replyId] || REPLY_LABELS.seen,
           onTheWay: REPLY_ON_THE_WAY.has(replyId),
+          etaMinutes: REPLY_ETA_MINUTES[replyId] || null,
           at: alert.acknowledgedAt.toDate().toISOString(),
         }
       : null,

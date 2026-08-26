@@ -1876,6 +1876,34 @@
           };
         }, [statusHandle, ownerReply]);
 
+        // Counts the ETA down while the page is open.
+        //
+        // A fixed "about 5 minutes" is stale the moment it is read. Someone
+        // standing in the road wants to know how much longer, and a number
+        // that moves is the difference between waiting and giving up. The
+        // clock ticks from the moment the owner actually replied, not from
+        // when this page happened to notice.
+        const [etaLeft, setEtaLeft] = useState(null);
+
+        useEffect(() => {
+          if (!ownerReply || !ownerReply.onTheWay || !ownerReply.etaMinutes) {
+            setEtaLeft(null);
+            return undefined;
+          }
+
+          const dueAt =
+            new Date(ownerReply.at).getTime() + ownerReply.etaMinutes * 60000;
+
+          const tick = () => {
+            // Floors at zero and stays there. Counting into negative numbers
+            // would turn a reassurance into an accusation.
+            setEtaLeft(Math.max(0, Math.round((dueAt - Date.now()) / 1000)));
+          };
+          tick();
+          const id = setInterval(tick, 1000);
+          return () => clearInterval(id);
+        }, [ownerReply]);
+
         async function handleSubmit(e) {
           e.preventDefault();
           if (sending) return;
@@ -2065,6 +2093,22 @@
                             {onTheWay ? "\u{1F697}" : "\u{1F440}"}
                           </div>
                           <h2 className="h4 mb-3">{ownerReply.label}</h2>
+                          {onTheWay && etaLeft !== null && (
+                            <div className="mb-3" aria-live="polite">
+                              <div className="display-6 fw-semibold text-success">
+                                {etaLeft > 0
+                                  ? `${Math.floor(etaLeft / 60)}:${String(
+                                      etaLeft % 60
+                                    ).padStart(2, "0")}`
+                                  : "Any moment"}
+                              </div>
+                              <div className="small text-muted">
+                                {etaLeft > 0
+                                  ? "estimated time until they arrive"
+                                  : "they should be arriving now"}
+                              </div>
+                            </div>
+                          )}
                           <p className="text-muted mb-4">
                             {onTheWay
                               ? "Thanks for letting them know \u2014 you can wait or head off, whichever suits you."
