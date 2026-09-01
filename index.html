@@ -7,17 +7,26 @@
     <meta name="description" content="Avahanaa enables quick, private notifications to vehicle owners via QR codes. Scan a QR, choose a reason and notify the owner instantly. Built with privacy and convenience in mind." />
     <!-- Favicon -->
     <link rel="icon" type="image/jpeg" href="./logo.jpg" />
-    <!-- Google Fonts for crisp, modern typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-    <!-- Bootswatch Flatly theme for a clean, modern palette -->
-    <!-- We load the base Bootstrap CSS first and then the Lux theme to override colours. -->
+    <!--
+      Plus Jakarta Sans for display, Inter for body — the same two faces the
+      Flutter app bundles. The app and this page are the same product seen from
+      two ends of one interaction, and until now they did not look related.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!--
+      Bootstrap's grid and components, but NOT its palette. Bootswatch Flatly
+      used to sit on top of this and was the source of the teal-and-mint look;
+      the theme layer below replaces it entirely by overriding Bootstrap's own
+      CSS variables, so the markup never had to change.
+    -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.1/dist/flatly/bootstrap.min.css"
     />
     <!-- Bootstrap Icons -->
     <link
@@ -30,105 +39,569 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <style>
-      /* Base layout */
+      /* ===================================================================
+         Avahanaa web theme
+         ===================================================================
+
+         One brand, two ends of the same interaction. The owner sees the
+         Flutter app; the stranger at the windscreen sees this page. Until
+         now they shared a name and nothing else — this page was Bootswatch
+         Flatly's teal and mint, the app was a corporate blue, and neither
+         looked like the other.
+
+         Both are now machined graphite with a warm bronze light source. The
+         tokens below are the same values as `lib/theme/app_theme.dart`, so a
+         change on one side is a visible mismatch rather than a silent drift.
+
+         Bootstrap's own CSS variables are overridden rather than its classes
+         replaced, which is why none of the JSX had to change.
+      ------------------------------------------------------------------- */
+
+      :root {
+        /* Brand — the graphite ramp, matching MetalPalette.brand */
+        --av-graphite-lift: #333a44;
+        --av-graphite: #23282f;
+        --av-graphite-core: #1a1e24;
+        --av-graphite-depth: #101317;
+        /* The warm corner. One stop, and it is what stops the hero reading
+           as a grey rectangle. */
+        --av-bronze-glow: #3a2e1e;
+
+        /* Accent — bronze as ink on light, amber as ink on dark. It has to be
+           both: `primary` is used for links on white AND for fills under
+           white, and a single bright amber cannot do both. #E8A33D on white
+           is 1.9:1. */
+        --av-bronze: #8a5a18;
+        --av-bronze-dark: #6e4712;
+        --av-amber: #e8a33d;
+
+        /* Signals. Red is reserved: it means "an alert" or "this destroys
+           data", and nothing else. */
+        --av-alert: #c81b30;
+        --av-alert-deep: #a01625;
+        --av-success: #10b981;
+        --av-success-ink: #047857;
+        --av-warning: #c2410c;
+
+        /* Neutrals run warm, so they sit with the bronze. A cool grey beside
+           bronze reads faintly green — the same reason they used to be
+           blue-slate beside the old blue. */
+        --av-bg: #faf9f7;
+        --av-surface: #ffffff;
+        --av-surface-muted: #f4f2ef;
+        --av-ink: #1a1814;
+        --av-ink-2: #55504a;
+        --av-ink-3: #736c63;
+        --av-line: #e6e1da;
+        --av-line-strong: #cfc8be;
+
+        --av-radius-control: 12px;
+        --av-radius-card: 14px;
+        --av-radius-hero: 20px;
+
+        /* Depth comes from a hairline and a very soft shadow, never from a
+           heavy drop shadow. Premium surfaces are milled, not floating. */
+        --av-shadow-card: 0 1px 2px rgba(26, 24, 20, 0.04),
+          0 8px 24px -12px rgba(26, 24, 20, 0.12);
+        --av-shadow-lift: 0 2px 6px rgba(26, 24, 20, 0.06),
+          0 18px 40px -20px rgba(26, 24, 20, 0.28);
+
+        /* Bootstrap's own variables, so its components inherit all of this */
+        --bs-primary: #8a5a18;
+        --bs-primary-rgb: 138, 90, 24;
+        --bs-body-bg: var(--av-bg);
+        --bs-body-color: var(--av-ink);
+        --bs-body-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        --bs-border-color: var(--av-line);
+        --bs-link-color: var(--av-bronze);
+        --bs-link-hover-color: var(--av-bronze-dark);
+        --bs-secondary-color: var(--av-ink-2);
+        --bs-emphasis-color: var(--av-ink);
+      }
+
+      /* Night. The scan page is used at 11pm by somebody who has been blocked
+         in, and a full-white page in a dark car park is its own small
+         hostility. Accents lift, because bronze on near-black is unreadable
+         at 2.4:1 — the amber is the same swap the app makes. */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --av-bg: #121110;
+          --av-surface: #1c1a17;
+          --av-surface-muted: #262320;
+          --av-ink: #f5f2ee;
+          --av-ink-2: #b8b0a6;
+          --av-ink-3: #9a9289;
+          --av-line: #322e29;
+          --av-line-strong: #4a443d;
+          --av-bronze: #e8a33d;
+          --av-bronze-dark: #f0b95f;
+          --av-alert: #ff6b7a;
+          --av-alert-deep: #ff8d98;
+          --av-success: #34d399;
+          --av-success-ink: #6ee7b7;
+          --av-warning: #fb923c;
+          --av-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5),
+            0 8px 24px -12px rgba(0, 0, 0, 0.7);
+          --av-shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.55),
+            0 18px 40px -20px rgba(0, 0, 0, 0.9);
+          --bs-primary: #e8a33d;
+          --bs-primary-rgb: 232, 163, 61;
+          --bs-link-color: #e8a33d;
+          --bs-link-hover-color: #f0b95f;
+        }
+      }
+
+      /* --- Base ------------------------------------------------------- */
+
       body {
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        background-color: #f8fafc;
-        font-family: 'Poppins', sans-serif;
-      }
-      /* Improve paragraph readability */
-      p {
+        background-color: var(--av-bg);
+        color: var(--av-ink);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        font-size: 1rem;
         line-height: 1.6;
-        margin-bottom: 1rem;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
       }
-      /* Hero section – a soothing gradient to complement the Flatly palette */
+
+      h1, h2, h3, h4, .display-1, .display-2, .display-3, .display-4,
+      .card-title, .navbar-brand {
+        font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+        font-weight: 700;
+        color: var(--av-ink);
+        /* Optical tracking: counters and side-bearings scale with the glyph,
+           so one letter-spacing value across the whole scale leaves large
+           headings looking gappy. */
+        letter-spacing: -0.02em;
+      }
+      .display-4 {
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+      }
+      p { line-height: 1.65; margin-bottom: 1rem; color: var(--av-ink-2); }
+      .lead { font-size: 1.125rem; color: var(--av-ink-2); }
+      .text-muted { color: var(--av-ink-3) !important; }
+      .text-primary { color: var(--av-bronze) !important; }
+      .text-success { color: var(--av-success-ink) !important; }
+
+      /* An overline: the small letterspaced label above a heading. Bootstrap
+         has no equivalent, and it is most of what makes a section read as
+         considered rather than assembled. */
+      .av-overline {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--av-ink-3);
+        margin-bottom: 0.5rem;
+      }
+
+      /* --- Hero ------------------------------------------------------- */
+
       .hero {
-        /* Deep navy fading into bright teal for a modern look */
-        background: linear-gradient(135deg, #0a304e, #00a3cc);
+        position: relative;
+        overflow: hidden;
+        background:
+          radial-gradient(
+            120% 140% at 88% 108%,
+            var(--av-bronze-glow) 0%,
+            transparent 58%
+          ),
+          linear-gradient(
+            150deg,
+            var(--av-graphite-lift) 0%,
+            var(--av-graphite) 28%,
+            var(--av-graphite-core) 62%,
+            var(--av-graphite-depth) 100%
+          );
         color: #ffffff;
-        padding: 6rem 1rem;
+        padding: 6rem 1.25rem 6.5rem;
         text-align: center;
       }
+      @media (max-width: 575.98px) {
+        /* On a phone the hero was pushing everything below it off the fold,
+           and the thing below it is the explanation of what this is. */
+        .hero { padding: 3.5rem 1.25rem 4rem; }
+      }
+      /* A single specular band, low and wide. Real metal has one bright edge
+         and a fast falloff; a symmetric sheen reads as plastic. */
+      .hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          104deg,
+          transparent 34%,
+          rgba(255, 255, 255, 0.055) 47%,
+          transparent 60%
+        );
+        pointer-events: none;
+      }
+      .hero > * { position: relative; }
       .hero h1 {
-        font-weight: 600;
-        margin-bottom: 0.75rem;
-        font-size: 2.6rem;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: clamp(2.2rem, 5.4vw, 3.4rem);
+        letter-spacing: -0.035em;
+        margin-bottom: 1rem;
       }
       .hero p {
-        font-size: 1.1rem;
-        max-width: 700px;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 1.125rem;
+        max-width: 660px;
         margin: 0 auto;
-        opacity: 0.95;
       }
-      /* Step icons styling */
-      .how-it-works .step-icon {
-        font-size: 2.7rem;
-        /* Use the Lux primary blue for icons */
-        color: #0d6efd;
+      /*
+        On the hero, the primary button inverts.
+
+        Everywhere else the primary action is graphite, because it sits on
+        warm white and graphite is the strongest thing that can. On the hero
+        that same button is graphite on graphite — it was very nearly
+        invisible, which is a poor property for the one control the page
+        exists to get pressed.
+
+        Amber on near-black is the accent doing the job it is for, and it is
+        the only place on the site where the amber appears at full strength.
+      */
+      .hero .btn-primary {
+        background: linear-gradient(180deg, #f0b95f, var(--av-amber));
+        border-color: rgba(0, 0, 0, 0.25);
+        color: var(--av-graphite-depth);
+        box-shadow: 0 10px 30px -12px rgba(232, 163, 61, 0.55);
       }
-      /* Footer styling */
-      .footer {
-        background-color: #002b5c;
-        color: #f8fafc;
-        padding: 2.5rem 0;
-        margin-top: auto;
+      .hero .btn-primary:hover,
+      .hero .btn-primary:focus {
+        background: linear-gradient(180deg, #f7cd88, #f0b95f);
+        border-color: rgba(0, 0, 0, 0.25);
+        color: var(--av-graphite-depth);
+        box-shadow: 0 14px 38px -12px rgba(232, 163, 61, 0.7);
       }
-      /* Notification / card container maximum width */
-      .notification-card {
-        max-width: 700px;
-        margin: 2rem auto;
+      /* A secondary action on the hero stays quiet: a hairline of white. */
+      .hero .btn-secondary,
+      .hero .btn-outline-secondary {
+        border-color: rgba(255, 255, 255, 0.32);
+        color: #ffffff;
       }
-      /* Reason button grid styling */
+      .hero .btn-secondary:hover,
+      .hero .btn-outline-secondary:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #ffffff;
+      }
+
+      /* --- Surfaces --------------------------------------------------- */
+
+      .card {
+        background-color: var(--av-surface);
+        border: 1px solid var(--av-line);
+        border-radius: var(--av-radius-card);
+        box-shadow: var(--av-shadow-card);
+        position: relative;
+      }
+      /* One hairline of light along the top edge. This is the whole
+         difference between a filled rectangle and a milled one. */
+      .card::after {
+        content: '';
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 1px;
+        border-radius: var(--av-radius-card) var(--av-radius-card) 0 0;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.7),
+          transparent
+        );
+        pointer-events: none;
+      }
+      @media (prefers-color-scheme: dark) {
+        .card::after {
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.08),
+            transparent
+          );
+        }
+      }
+      .card-body { padding: 1.5rem; }
+      .card-title { font-size: 1.125rem; margin-bottom: 0.4rem; }
+      .card-text { color: var(--av-ink-2); }
+      .shadow-sm { box-shadow: var(--av-shadow-card) !important; }
+      .notification-card { max-width: 680px; margin: 2.5rem auto; }
+
+      /* --- Buttons ---------------------------------------------------- */
+
+      .btn {
+        border-radius: var(--av-radius-control);
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        padding: 0.75rem 1.4rem;
+        transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+          box-shadow 0.18s ease, background-color 0.18s ease,
+          border-color 0.18s ease;
+      }
+      .btn:active { transform: scale(0.985); }
+
+      /* The primary action is graphite, not bronze. Bronze is the accent —
+         used as ink for links and selected states — and a page where every
+         button is the accent colour has no hierarchy. */
+      .btn-primary {
+        background: linear-gradient(
+          180deg,
+          var(--av-graphite-lift),
+          var(--av-graphite-core)
+        );
+        border: 1px solid var(--av-graphite-depth);
+        color: #ffffff;
+        box-shadow: var(--av-shadow-card);
+      }
+      .btn-primary:hover,
+      .btn-primary:focus {
+        background: linear-gradient(
+          180deg,
+          #3c4450,
+          var(--av-graphite)
+        );
+        border-color: var(--av-graphite-depth);
+        color: #ffffff;
+        box-shadow: var(--av-shadow-lift);
+      }
+      .btn-primary:disabled,
+      .btn-primary.disabled { opacity: 0.5; box-shadow: none; }
+
+      .btn-secondary,
+      .btn-outline-secondary {
+        background-color: transparent;
+        border: 1px solid var(--av-line-strong);
+        color: var(--av-ink);
+      }
+      .btn-secondary:hover,
+      .btn-outline-secondary:hover {
+        background-color: var(--av-surface-muted);
+        border-color: var(--av-ink-3);
+        color: var(--av-ink);
+      }
+      .btn-success {
+        background-color: var(--av-success-ink);
+        border-color: var(--av-success-ink);
+      }
+      .btn-danger {
+        background-color: var(--av-alert);
+        border-color: var(--av-alert);
+      }
+      .btn-lg { padding: 0.95rem 1.75rem; font-size: 1.0625rem; }
+
+      /* --- The reason grid -------------------------------------------- */
+      /*
+        The single most important control on the site: it is what a stranger
+        standing in the road actually taps, often one-handed, often in a
+        hurry. Big targets, obvious selected state, no ambiguity.
+      */
       .reason-buttons button {
-        border-radius: 0.5rem;
-        padding: 0.6rem 0.8rem;
-        font-size: 0.95rem;
+        /*
+          Set Bootstrap's own variables rather than fighting its specificity.
+          `.btn:hover` and `.btn:focus` resolve their border from
+          `--bs-btn-hover-border-color`, which for a bare `.btn` fell back to
+          the emphasis colour — a near-black ring that appeared on hover and
+          then *stuck* after a tap, sitting next to the bronze ring that means
+          "selected". Two rings, two meanings, no way to tell them apart.
+        */
+        --bs-btn-bg: var(--av-surface);
+        --bs-btn-color: var(--av-ink);
+        --bs-btn-border-color: var(--av-line);
+        --bs-btn-hover-bg: var(--av-surface-muted);
+        --bs-btn-hover-color: var(--av-ink);
+        --bs-btn-hover-border-color: var(--av-line-strong);
+        --bs-btn-active-bg: var(--av-surface-muted);
+        --bs-btn-active-color: var(--av-ink);
+        --bs-btn-active-border-color: var(--av-line-strong);
+        --bs-btn-focus-shadow-rgb: 138, 90, 24;
+        width: 100%;
+        min-height: 56px;
+        border-radius: var(--av-radius-control);
+        padding: 0.85rem 1rem;
+        font-size: 0.975rem;
+        font-weight: 500;
         text-align: left;
         white-space: normal;
         display: flex;
         align-items: center;
-        transition: background-color 0.15s ease;
+        gap: 0.75rem;
+        background-color: var(--av-surface);
+        border: 1px solid var(--av-line);
+        color: var(--av-ink);
+        box-shadow: none;
       }
       .reason-buttons button i {
-        margin-right: 0.6rem;
+        font-size: 1.15rem;
+        color: var(--av-ink-3);
+        transition: color 0.18s ease;
+        margin-right: 0;
       }
-      /* Selected reason button */
-      .reason-buttons button.active {
-        /* Use Flatly primary green for the selected state */
-        background-color: #18bc9c !important;
-        color: #ffffff !important;
-        border-color: #18bc9c !important;
+      .reason-buttons button:hover {
+        border-color: var(--av-line-strong);
+        background-color: var(--av-surface-muted);
       }
-      /* Unselected reason buttons */
-      .reason-buttons button:not(.active) {
-        background-color: #ffffff;
-        border-color: #d1d8e0;
-        color: #2c3e50;
+      .reason-buttons button.active,
+      .reason-buttons button.active:hover,
+      .reason-buttons button.active:focus {
+        background-color: var(--av-surface) !important;
+        color: var(--av-ink) !important;
+        /* Two rings rather than a fill: a filled selected state at this size
+           is a slab of colour that competes with the send button, which is
+           the thing they are meant to press next. */
+        border-color: var(--av-bronze) !important;
+        box-shadow: 0 0 0 3px rgba(138, 90, 24, 0.14);
       }
-      /* Hover effect for unselected buttons */
-      .reason-buttons button:not(.active):hover {
-        background-color: #ecf2f9;
+      .reason-buttons button.active i,
+      .reason-buttons button.active:hover i { color: var(--av-bronze); }
+
+      /* A tap leaves focus behind on mobile. Keyboard users still get a ring
+         — `:focus-visible` — but a thumb should not leave one on a control it
+         has already finished with. */
+      .reason-buttons button:focus:not(:focus-visible) {
+        box-shadow: none;
+      }
+      @media (prefers-color-scheme: dark) {
+        .reason-buttons button.active {
+          box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.18);
+        }
       }
 
-      /* Form controls styling for better contrast */
+      /* --- Forms ------------------------------------------------------ */
+
+      .form-label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--av-ink-2);
+        margin-bottom: 0.4rem;
+      }
       .form-control,
       textarea.form-control {
-        background-color: #ffffff;
-        border-color: #cbd5e1;
-        color: #0d2b45;
+        background-color: var(--av-surface);
+        border: 1px solid var(--av-line-strong);
+        border-radius: var(--av-radius-control);
+        color: var(--av-ink);
+        padding: 0.8rem 1rem;
+        font-size: 1rem;
       }
+      .form-control::placeholder { color: var(--av-ink-3); }
       .form-control:focus,
       textarea.form-control:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        background-color: var(--av-surface);
+        border-color: var(--av-bronze);
+        color: var(--av-ink);
+        box-shadow: 0 0 0 3px rgba(138, 90, 24, 0.16);
+      }
+      @media (prefers-color-scheme: dark) {
+        .form-control:focus,
+        textarea.form-control:focus {
+          box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.2);
+        }
       }
 
-      /* Custom navbar colour to complement footer */
-      .navbar.bg-dark {
-        /* Align with footer dark hue */
-        background-color: #002b5c !important;
+      /* --- Alerts ----------------------------------------------------- */
+
+      .alert {
+        border-radius: var(--av-radius-card);
+        border: 1px solid transparent;
+        padding: 1rem 1.15rem;
+        font-size: 0.95rem;
+      }
+      .alert-success {
+        background-color: rgba(16, 185, 129, 0.09);
+        border-color: rgba(16, 185, 129, 0.28);
+        color: var(--av-success-ink);
+      }
+      .alert-danger {
+        background-color: rgba(200, 27, 48, 0.08);
+        border-color: rgba(200, 27, 48, 0.26);
+        color: var(--av-alert-deep);
+      }
+      .alert-warning {
+        background-color: rgba(194, 65, 12, 0.09);
+        border-color: rgba(194, 65, 12, 0.26);
+        color: var(--av-warning);
+      }
+      .alert-info {
+        background-color: var(--av-surface-muted);
+        border-color: var(--av-line);
+        color: var(--av-ink-2);
+      }
+
+      /* --- Chrome ----------------------------------------------------- */
+
+      .navbar.bg-dark,
+      .navbar {
+        background-color: var(--av-graphite-core) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        padding-top: 0.9rem;
+        padding-bottom: 0.9rem;
+      }
+      .navbar-brand {
+        color: #ffffff !important;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .navbar .nav-link {
+        color: rgba(255, 255, 255, 0.74) !important;
+        font-weight: 500;
+        transition: color 0.15s ease;
+      }
+      .navbar .nav-link:hover,
+      .navbar .nav-link.active { color: #ffffff !important; }
+
+      .footer {
+        background-color: var(--av-graphite-core);
+        color: rgba(255, 255, 255, 0.72);
+        padding: 3rem 0;
+        margin-top: auto;
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+      }
+      .footer a { color: rgba(255, 255, 255, 0.9); text-decoration: none; }
+      .footer a:hover { color: var(--av-amber); }
+
+      /* --- How it works ----------------------------------------------- */
+
+      .how-it-works .step-icon {
+        font-size: 1.6rem;
+        color: var(--av-bronze);
+        width: 60px;
+        height: 60px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 18px;
+        background-color: rgba(138, 90, 24, 0.09);
+        border: 1px solid rgba(138, 90, 24, 0.18);
+        margin-bottom: 0.25rem;
+      }
+      @media (prefers-color-scheme: dark) {
+        .how-it-works .step-icon {
+          background-color: rgba(232, 163, 61, 0.12);
+          border-color: rgba(232, 163, 61, 0.24);
+        }
+      }
+
+      /* --- Accessibility ---------------------------------------------- */
+
+      :focus-visible {
+        outline: 2px solid var(--av-bronze);
+        outline-offset: 2px;
+      }
+      /* Honour the system setting. The sheen and the press physics are
+         decoration; somebody who has asked for less motion has asked for
+         less of exactly this. */
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.001ms !important;
+          transition-duration: 0.001ms !important;
+        }
+        .btn:active { transform: none; }
       }
     </style>
   </head>
@@ -850,7 +1323,7 @@
                 &copy; 2025 Avahanaa. All rights reserved.
               </p>
               <p className="mb-0 small">
-                Powered by Firebase &amp; React. Designed with Bootswatch Flatly.
+                Powered by Firebase &amp; React.
               </p>
               <p className="mb-0 mt-2 small">
                 <a className="link-light" href="./privacy-policy.html">Privacy Policy</a>
@@ -2367,14 +2840,33 @@
                           </div>
                         </div>
                       )}
+                      {/*
+                        Primary, not success. Green in this product means
+                        "confirmed" — the owner is on their way, the QR is
+                        active — and a green button here reads as though the
+                        thing has already happened. This is the one action the
+                        whole page exists for, so it takes the strongest
+                        treatment the design system has.
+                      */}
                       <button
                         id="notifyOwnerBtn"
                         type="submit"
-                        className="btn btn-success w-100 mt-2"
+                        className="btn btn-primary btn-lg w-100 mt-2"
                         disabled={sending || !reason || !canNotify}
                       >
                         {sending ? "Sending…" : "Notify Owner Now"}
                       </button>
+                      {/*
+                        Say why it is disabled. Somebody standing in the road
+                        pressing a dead button has no way to know a reason is
+                        required, and the reason grid is far enough above that
+                        the connection is not obvious.
+                      */}
+                      {!reason && canNotify && !sending && (
+                        <p className="text-muted small text-center mt-2 mb-0">
+                          Pick a reason above to send.
+                        </p>
+                      )}
                       {notifyFeedback.message && (
                         <p
                           id="notifyOwnerFeedback"
