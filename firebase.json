@@ -57,6 +57,26 @@
         "region": "asia-south1"
       },
       {
+        "source": "/api/wallet/ssv",
+        "function": "adSsv",
+        "region": "asia-south1"
+      },
+      {
+        "source": "/api/wallet/claim",
+        "function": "walletClaim",
+        "region": "asia-south1"
+      },
+      {
+        "source": "/api/billing/verify",
+        "function": "billingVerify",
+        "region": "asia-south1"
+      },
+      {
+        "source": "/api/alerts/test",
+        "function": "selfTest",
+        "region": "asia-south1"
+      },
+      {
         "source": "/n/**",
         "destination": "/index.html"
       },

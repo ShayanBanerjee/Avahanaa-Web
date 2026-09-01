@@ -59,6 +59,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "adRewards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "customData",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

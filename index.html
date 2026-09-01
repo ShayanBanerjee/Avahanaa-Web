@@ -655,6 +655,71 @@
        * own credentials, so there is no title, no body and no token here to
        * tamper with.
        */
+      /**
+       * Where the vehicle is, if the person scanning is willing to say.
+       *
+       * The owner's first question on getting an alert is "which car, and
+       * where?" — they may have three vehicles and no idea which windscreen
+       * was scanned. A coordinate answers it in one line.
+       *
+       * Three rules, and they are the reason this is defensible at all:
+       *
+       * 1. **Never blocking.** The alert is the product; the location is a
+       *    nicety. A permission prompt somebody ignores must not stop the
+       *    button working, so this resolves to null after six seconds no
+       *    matter what the browser is doing.
+       * 2. **Never silent.** The browser's own prompt is the consent, and it
+       *    only appears after the reason has been chosen, so nobody is asked
+       *    for their location before they know what they are sending.
+       * 3. **Never precise.** The server rounds to three decimals (~110 m)
+       *    before storing. That is enough to find a parked car and not enough
+       *    to follow a person — and the person scanning is a stranger doing a
+       *    favour, who is owed the same anonymity the owner gets.
+       */
+      function captureScanLocation() {
+        return new Promise((resolve) => {
+          if (!navigator.geolocation) {
+            resolve(null);
+            return;
+          }
+
+          let settled = false;
+          const finish = (value) => {
+            if (settled) return;
+            settled = true;
+            resolve(value);
+          };
+
+          // Belt as well as braces: `timeout` below covers a slow fix, but not
+          // a browser that never calls back at all — which is what a dismissed
+          // (rather than denied) permission prompt does on some mobile
+          // browsers, and somebody is standing in the street waiting.
+          const giveUp = setTimeout(() => finish(null), 6000);
+
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              clearTimeout(giveUp);
+              finish({
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+                accuracyM: position.coords.accuracy,
+              });
+            },
+            () => {
+              clearTimeout(giveUp);
+              finish(null);
+            },
+            {
+              enableHighAccuracy: false,
+              timeout: 5000,
+              // A fix from the last two minutes is fine and costs no radio
+              // time. Nobody has walked far since.
+              maximumAge: 120000,
+            }
+          );
+        });
+      }
+
       async function triggerNotifyFunction(payload) {
         try {
           const response = await fetch("/api/notify", {
@@ -664,6 +729,11 @@
               qrCodeId: payload.qrCodeId || payload.qrId || "",
               reason: payload.reason || "other",
               message: payload.message || "",
+              // Omitted entirely when it was declined or unavailable, rather
+              // than sent as nulls. The server treats a missing field and a
+              // refused one identically, and there is no reason to describe
+              // somebody's refusal on the wire.
+              ...(payload.location ? { location: payload.location } : {}),
             }),
           });
 
@@ -1977,10 +2047,19 @@
             metadata.color = user.carDetails.color.trim();
           }
           try {
+            // Awaited before the send, not alongside it. The alert must
+            // carry the location or nothing, and `captureScanLocation` is
+            // already hard-bounded at six seconds — so the worst case is an
+            // alert that leaves six seconds late, and the common case (a
+            // cached fix, or a browser that refuses instantly) is no delay at
+            // all.
+            const scanLocation = await captureScanLocation();
+
             const result = await triggerNotifyFunction({
               qrCodeId: targetQrId,
               reason: reasonCode,
               message: bodyMsg,
+              location: scanLocation,
             });
             if (result.ok) {
               setNotifyFeedback({

@@ -45,8 +45,27 @@ small collection this is a minute or two.
 firebase deploy --only functions --project congestion-free
 ```
 
-Creates `resolveQr`, `notify`, `lookup`, `deliverAlert` in **asia-south1**, and
-replaces `notifyOwner` in **us-central1** with the retirement stub.
+Creates `resolveQr`, `notify`, `lookup`, `status`, `deliverAlert`, and — added
+Sep 2026 with the alert budget — `adSsv`, `walletClaim`, `billingVerify`,
+`selfTest` and `playNotifications`, all in **asia-south1**. Replaces
+`notifyOwner` in **us-central1** with the retirement stub.
+
+`playNotifications` is a Pub/Sub consumer, not an HTTP endpoint. It needs its
+topic to exist first:
+
+```bash
+gcloud pubsub topics create play-billing-rtdn --project congestion-free
+gcloud pubsub topics add-iam-policy-binding play-billing-rtdn \
+  --member=serviceAccount:google-play-developer-notifications@system.gserviceaccount.com \
+  --role=roles/pubsub.publisher --project congestion-free
+```
+
+`billingVerify` calls the Play Developer API with the functions' own service
+account. Grant `congestion-free@appspot.gserviceaccount.com` **View financial
+data** in Play Console → Users & permissions, or every purchase verifies as 401
+and no subscription ever activates. The full checklist — Play products, the
+AdMob SSV callback URL, data safety — is `docs/monetization.md` in the app
+repo.
 
 `asia-south1` (Mumbai) is deliberate — the previous `notifyOwner` ran in
 `us-central1`, roughly 200 ms of round trip away from every Bangalore scanner,
@@ -82,7 +101,8 @@ real phone rings**:
 
 1. Scan a real sticker with a phone that is not the owner's.
 2. Send an alert. The owner's device should alarm on
-   `avahanaa_critical_alerts_v2`, not the quiet legacy channel.
+   `avahanaa_critical_alerts_v3`, not the quiet legacy channel and not
+   `avahanaa_quiet_notices_v1`.
 3. **Leave it untouched for 3 minutes.** The first escalating reminder must
    fire. This is the regression that matters most: the old `notifyOwner` sent a
    `notification` block, which meant Android displayed it directly and the
@@ -90,9 +110,26 @@ real phone rings**:
    push is not data-only and the fix has not taken.
 4. Open the alert, confirm the reminder is cancelled and no +15 min fires.
 
+Then the alert budget, which has its own way of failing quietly:
+
+5. Send **four** alerts to a fresh account (the free allowance is three). The
+   fourth must still arrive — on `avahanaa_quiet_notices_v1`, without the alarm
+   tone and without a +3 min reminder. An alert that does not arrive at all is
+   the failure this feature must never have.
+6. Send a fifth with reason `emergency`. It must alarm at full strength
+   regardless of the balance. If it does not, `ALWAYS_FREE_REASONS` is not
+   being consulted before the balance and the deploy should be rolled back.
+7. From the app, Profile → *Test the alarm*. It must ring, and it must not
+   decrement the balance shown on the home screen.
+
 Finally, confirm the leak is closed. In the scan page's Network tab there must
 be **no request to `firestore.googleapis.com` for `users`**, and no `fcmToken`
 or `phoneNumber` anywhere in the responses.
+
+While that tab is open, check the location too: `POST /api/notify` may carry a
+`location` object if you allowed the browser prompt, and the coordinates in it
+must be **rounded to three decimals**. A full-precision fix reaching the wire
+means `sanitiseLocation` is not being applied.
 
 ### 6. Retire `notifyOwner` (about a week later)
 

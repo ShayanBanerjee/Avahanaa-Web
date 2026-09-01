@@ -31,13 +31,42 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // The alert budget. Server-written, every one of them.
+    //
+    // These decide whether an alert arrives as an alarm or as a quiet notice,
+    // and whether the owner is paying. A client that could set `plan` would
+    // have a free subscription; one that could set `alertCredits` would have
+    // infinite ads-watched. So the owner is allowed to write everything on
+    // their own document *except* these.
+    //
+    // Written as a denylist rather than an allowlist on purpose. An allowlist
+    // would have to enumerate every field the app writes today — phoneNumber,
+    // fcmToken, carDetails, primaryVehicleId, notificationsEnabled, the two
+    // legacy fields, updatedAt — and would silently break the next one that is
+    // added. The risk here is specific and small enough to name exactly.
+    function billingFields() {
+      return [
+        'plan', 'planProductId', 'planExpiresAt', 'planUpdatedAt',
+        'alertCredits', 'freeAlertsUsed', 'cycleStartedAt',
+        'lifetimeAlertsReceived', 'lifetimeAdsWatched'
+      ];
+    }
+
     // -- Users ------------------------------------------------------------
     match /users/{userId} {
       allow read: if isOwner(userId);
-      allow create: if isOwner(userId);
+
+      // A new account starts on the free tier with an untouched allowance, and
+      // it gets there by not naming any of these — never by asking for them.
+      allow create: if isOwner(userId)
+        && !request.resource.data.keys().hasAny(billingFields());
+
       // The FCM token lives here, so a write by anyone else would let an
       // attacker redirect a stranger's alerts to their own device.
-      allow update: if isOwner(userId);
+      allow update: if isOwner(userId)
+        && !request.resource.data.diff(resource.data)
+             .affectedKeys().hasAny(billingFields());
+
       allow delete: if isOwner(userId);
 
       match /vehicles/{vehicleId} {
@@ -97,6 +126,24 @@ service cloud.firestore {
              ]);
 
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // -- Wallet bookkeeping -----------------------------------------------
+    //
+    // `adRewards` records one settled AdMob server-side-verification callback,
+    // keyed by Google's transaction id so a retry cannot pay out twice.
+    // `purchaseTokens` records which account claimed a Play purchase, so one
+    // subscription cannot be shared across accounts.
+    //
+    // Both are written only by the Admin SDK. Reads are closed too: the app
+    // asks `/api/wallet/claim` whether a reward settled, which answers for the
+    // caller's own uid and nothing else.
+    match /adRewards/{transactionId} {
+      allow read, write: if false;
+    }
+
+    match /purchaseTokens/{tokenHash} {
+      allow read, write: if false;
     }
 
     // -- Rate limiting ----------------------------------------------------
