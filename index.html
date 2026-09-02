@@ -1470,6 +1470,19 @@
         const [carDetails, setCarDetails] = useState(() => ({
           ...queryDefaults.directDetails,
         }));
+        // Vestigial, and deliberately kept.
+        //
+        // Several code paths still write to this; nothing reads it any more,
+        // because the send no longer assembles a push target — `/api/notify`
+        // gets a QR id and derives the rest server-side. Every field it is
+        // ever handed is now the empty string, since `/api/qr` returns no
+        // token, no userId and no vehicleId.
+        //
+        // Kept rather than torn out mid-merge: removing it means editing
+        // seven call sites in code that has just been reconciled, and the
+        // one path that used to put a *real* token in here — decoding a
+        // legacy encrypted sticker — is cut above. Worth deleting properly
+        // in a follow-up, where the diff can be read on its own.
         const [notifyTarget, setNotifyTarget] = useState({
           fcmToken: "",
           userId: "",
@@ -1546,35 +1559,24 @@
                 });
                 return next;
               });
-              const decodedToken =
-                typeof decoded.fcmToken === "string"
-                  ? decoded.fcmToken.trim()
-                  : "";
-              const decodedUserId =
-                typeof decoded.userId === "string" ? decoded.userId.trim() : "";
-              const decodedVehicleId =
-                typeof decoded.vehicleId === "string"
-                  ? decoded.vehicleId.trim()
-                  : "";
+              // The QR id, and nothing else.
+              //
+              // This decode path used to lift `fcmToken`, `userId` and
+              // `vehicleId` out of the legacy encrypted payload and hold them
+              // in component state. Nothing sends them any more — the server
+              // resolves all three from the QR id using its own credentials —
+              // but holding the owner's push token in a stranger's page is the
+              // exact thing this page was changed to stop doing, and it is
+              // still in the network tab and the heap whether or not anything
+              // reads it.
+              //
+              // The vehicle's colour, model and plate are still taken from the
+              // payload above: that is the description the owner chose to put
+              // on the sticker, not their identity.
               const decodedQrId =
                 typeof decoded.qrCodeId === "string"
                   ? decoded.qrCodeId.trim()
                   : "";
-              if (decodedToken || decodedUserId || decodedVehicleId) {
-                setNotifyTarget((prev) => {
-                  const next = { ...prev };
-                  if (!next.fcmToken && decodedToken) {
-                    next.fcmToken = decodedToken;
-                  }
-                  if (!next.userId && decodedUserId) {
-                    next.userId = decodedUserId;
-                  }
-                  if (!next.vehicleId && decodedVehicleId) {
-                    next.vehicleId = decodedVehicleId;
-                  }
-                  return next;
-                });
-              }
               if (decodedQrId) {
                 setIdentifier((prev) => prev || decodedQrId);
               }
@@ -1696,21 +1698,11 @@
               }
               return next;
             });
-            const nextFcmToken =
-              typeof resolvedUser.fcmToken === "string"
-                ? resolvedUser.fcmToken.trim()
-                : "";
-            const nextUserId =
-              resolvedUser.id || resolvedUser.userId || "";
-            const nextVehicleId =
-              typeof resolvedUser.vehicleId === "string"
-                ? resolvedUser.vehicleId.trim()
-                : "";
-            setNotifyTarget({
-              fcmToken: nextFcmToken,
-              userId: nextUserId,
-              vehicleId: nextVehicleId,
-            });
+            // No push target is assembled here any more. `/api/qr` answers
+            // with the vehicle's colour, model and plate and nothing else —
+            // no token, no userId, not even a vehicleId — because the server
+            // resolves the owner from the QR id with its own credentials and
+            // accepts nothing about them from this page.
             setNotifyFeedback({
               message: "Ready to alert the owner instantly.",
               variant: "muted",

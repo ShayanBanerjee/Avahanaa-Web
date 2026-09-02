@@ -21,7 +21,7 @@ This repository now relies entirely on Firebase services—Firestore for lookup/
 ```
 avahanaa_web/
 ├── functions/              # Firebase Cloud Functions (Node.js 18)
-│   ├── index.js            # notifyOwner callable + config fetch endpoint
+│   ├── index.js            # notifyOwner callable function
 │   └── package.json        # firebase-admin + firebase-functions dependencies
 ├── index.html              # Main React single-page application
 ├── notify.html             # Stand-alone QR landing page used when a code is scanned
@@ -42,7 +42,7 @@ cd avahanaa_web
 
 1. In [Firebase Console](https://console.firebase.google.com/), create or open the **congestion-free** project that the Flutter app already uses.
 2. Enable **Firestore** (in production mode) and ensure the mobile app writes `users`, `qrCodes`, and `notifications` documents as shown in the Flutter project (`lib/services/firestore_service.dart`).
-3. Under **Project settings → General**, add a **Web app** if one doesn’t exist and copy the config snippet. Populate `functions/.env` (see `functions/.env.example`) with those values so Firebase config is served from the backend instead of being embedded in the HTML. The supplied defaults target the `congestion-free` project; adjust only if you use a different Firebase project.
+3. Under **Project settings → General**, add a **Web app** if one doesn’t exist and copy the config snippet. Paste those values into both `index.html` and `notify.html` (replace the placeholders in `firebaseConfig`). The supplied config already targets the `congestion-free` project; adjust only if you use a different Firebase project.
 
 ### 3. Install Cloud Function dependencies
 
@@ -51,8 +51,6 @@ cd functions
 npm install
 cd ..
 ```
-
-The callable function only needs `firebase-admin` and `firebase-functions`; no secrets or server keys are required because Cloud Functions runs with your project’s service account.
 
 ### 4. Emulate Locally (optional but recommended)
 
@@ -69,14 +67,14 @@ In another terminal, serve the static files (or open `index.html` directly). Whe
 ### 5. Deploy
 
 ```bash
-firebase deploy --only functions,hosting
+firebase deploy --only functions:notifyOwner,hosting
 ```
 
 Ensure your `firebase.json` hosting section points to this directory (e.g. `"public": "."`) or the folder where you build the static assets. If you want different environments (staging/production), use Firebase hosting targets.
 
 ## Notification Flow
 
-1. QR sticker encodes a URL such as `https://congestion-free.firebaseapp.com/notify.html?qr=<ID>`.
+1. QR sticker encodes a URL such as `https://avahanaa.com/notify.html?qr=<ID>`.
 2. The landing page (or the Notify view inside `index.html`) loads the vehicle metadata directly from the query parameters first, then resolves missing details through Firestore (`qrCodes` → `users`).
 3. When the visitor taps **Notify this owner**, the page calls the callable Cloud Function:
 

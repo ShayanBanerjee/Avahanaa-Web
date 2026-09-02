@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account Deletion | Avahanaa</title>
+    <meta
+      name="description"
+      content="How to delete your Avahanaa account and associated data."
+    />
+    <link rel="icon" type="image/jpeg" href="./logo.jpg" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.1/dist/flatly/bootstrap.min.css"
+    />
+    <style>
+      body {
+        min-height: 100vh;
+        margin: 0;
+        font-family: "Poppins", sans-serif;
+        background: #f8fafc;
+        color: #1f2937;
+      }
+      .hero {
+        background: linear-gradient(135deg, #0a304e, #00a3cc);
+        color: #ffffff;
+        padding: 3.5rem 1rem;
+      }
+      .hero h1 {
+        font-weight: 700;
+      }
+      .info-card {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 15px 40px rgba(10, 48, 78, 0.12);
+      }
+      .section-title {
+        color: #0a304e;
+        font-weight: 600;
+        margin-top: 1.75rem;
+      }
+      .last-updated {
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 0.95rem;
+      }
+      .info-card p,
+      .info-card li {
+        line-height: 1.7;
+      }
+      .summary-box {
+        background: #eef8ff;
+        border: 1px solid #b7def7;
+        border-radius: 0.8rem;
+      }
+      .warning-box {
+        background: #fff5f5;
+        border: 1px solid #f5c2c7;
+        border-radius: 0.8rem;
+      }
+      .footer {
+        background-color: #002b5c;
+        color: #f8fafc;
+      }
+      .footer a {
+        color: #f8fafc;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+      <div class="container">
+        <a class="navbar-brand" href="./index.html">
+          <img src="./logo.jpg" alt="Avahanaa" width="40" class="me-2" />
+          Avahanaa
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link" href="./index.html">Home</a></li>
+            <li class="nav-item">
+              <a class="nav-link" href="./index.html?page=notify">Notify</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="./index.html?page=about">About</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="./index.html?page=contact">Contact</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="./privacy-policy.html">Privacy</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="./terms-and-conditions.html">Terms</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="./account-deletion.html"
+                >Delete Account</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="container">
+        <h1 class="mb-2">Account Deletion</h1>
+        <p class="mb-1">
+          How Avahanaa users can request deletion of their account and app data.
+        </p>
+        <div class="last-updated">Last updated: March 2, 2026</div>
+      </div>
+    </header>
+
+    <main class="container py-5">
+      <div class="card info-card">
+        <div class="card-body p-4 p-md-5">
+          <div class="summary-box p-3 mb-4">
+            Avahanaa provides an in-app account deletion option. Once you confirm
+            the request in the app, deletion is processed immediately. You can
+            also submit a deletion request outside the app using the email option
+            below.
+          </div>
+
+          <h2 class="h4 section-title">1. Request deletion outside the app</h2>
+          <p>
+            If you cannot access the app, send a deletion request to
+            <a href="mailto:hello@avahanaa.com?subject=Avahanaa%20Account%20Deletion%20Request">hello@avahanaa.com</a>
+            with the subject <strong>Avahanaa Account Deletion Request</strong>.
+          </p>
+          <p>
+            In your message, include the email address used for your Avahanaa
+            account and, if available, your vehicle registration number so we can
+            identify the correct account.
+          </p>
+          <p>
+            <a
+              class="btn btn-primary"
+              href="mailto:hello@avahanaa.com?subject=Avahanaa%20Account%20Deletion%20Request"
+              >Email deletion request</a
+            >
+          </p>
+
+          <h2 class="h4 section-title">2. Steps to request account deletion in the app</h2>
+          <ol>
+            <li>Open the Avahanaa app and sign in to your account.</li>
+            <li>Go to <strong>Profile</strong>.</li>
+            <li>Tap <strong>Delete Account</strong>.</li>
+            <li>Enter your current password.</li>
+            <li>Confirm the deletion request.</li>
+          </ol>
+
+          <div class="warning-box p-3 mt-4">
+            <strong>Important:</strong> account deletion is permanent and cannot
+            be undone.
+          </div>
+
+          <h2 class="h4 section-title">3. Data that is deleted</h2>
+          <ul>
+            <li>Your Avahanaa account record.</li>
+            <li>Your email address and stored phone number.</li>
+            <li>Your vehicle records.</li>
+            <li>Your QR code records.</li>
+            <li>Your in-app notification history.</li>
+            <li>Your stored push notification token.</li>
+          </ul>
+
+          <h2 class="h4 section-title">4. Data that may be kept temporarily</h2>
+          <p>
+            Avahanaa does not intentionally keep your app-controlled account,
+            vehicle, QR, or notification data after deletion is completed.
+          </p>
+          <p>
+            Some limited security, fraud-prevention, backup, or diagnostic logs
+            handled by infrastructure providers such as Google Firebase may remain
+            for a temporary period under those providers' retention policies.
+          </p>
+
+          <h2 class="h4 section-title">5. Retention period</h2>
+          <p>
+            App-controlled deletion is executed immediately after you confirm the
+            request inside the Avahanaa app.
+          </p>
+
+          <h2 class="h4 section-title">6. Need help?</h2>
+          <p class="mb-0">
+            If you cannot access the app and need assistance, contact
+            <a href="mailto:souvikbanerjee73@gmail.com">souvikbanerjee73@gmail.com</a>.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer py-4">
+      <div class="container text-center small">
+        <div>&copy; 2026 Avahanaa. All rights reserved.</div>
+        <div class="mt-1">
+          <a href="./index.html">Home</a>
+          <span class="mx-2">|</span>
+          <a href="./index.html?page=contact">Contact</a>
+          <span class="mx-2">|</span>
+          <a href="./privacy-policy.html">Privacy Policy</a>
+          <span class="mx-2">|</span>
+          <a href="./terms-and-conditions.html">Terms &amp; Conditions</a>
+          <span class="mx-2">|</span>
+          <a href="./account-deletion.html">Account Deletion</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

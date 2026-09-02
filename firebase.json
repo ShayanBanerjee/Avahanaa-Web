@@ -20,10 +20,13 @@
     "public": ".",
     "ignore": [
       "firebase.json",
+      ".firebaserc",
       "firestore.rules",
       "firestore.indexes.json",
       "DEPLOY.md",
       "README.md",
+      ".git/**",
+      ".firebase/**",
       "**/.*",
       "**/node_modules/**",
       "functions/**"
