@@ -83,13 +83,19 @@
   --ink-on-alert-fill: #a01625;
 
   /* The brand metal ramp (MetalPalette.brand). Five stops: lift, base, core,
-     depth, and the warm catch-light — the bronze corner the light is coming
-     from. It is the one stop that stops the hero reading as a grey rectangle. */
-  --metal-lift: #333a44;
-  --metal-base: #23282f;
-  --metal-core: #1a1e24;
-  --metal-depth: #101317;
-  --metal-catch: #3a2e1e;
+     depth, and the brass catch-light — the corner the light is coming from.
+
+     Re-cut warm in Sep 2026. These were a cool blue-grey left over from when
+     the brand was steel blue; against the warm neutrals and the bronze
+     primary they read as a slab borrowed from another product. Every stop is
+     now warm, and the catch-light is genuinely brass rather than a muted
+     brown that barely registered. Mirrors lib/widgets/metal.dart exactly —
+     if one moves, the other moves the same day. */
+  --metal-lift: #3b3229;
+  --metal-base: #2b241d;
+  --metal-core: #1f1a15;
+  --metal-depth: #15110e;
+  --metal-catch: #5a4224;
 
   /* Brushed silver, for the registration plate. */
   --silver-lift: #ffffff;
