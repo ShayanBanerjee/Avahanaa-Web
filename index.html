@@ -5,132 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Avahanaa – Quick Vehicle Notifications</title>
     <meta name="description" content="Avahanaa enables quick, private notifications to vehicle owners via QR codes. Scan a QR, choose a reason and notify the owner instantly. Built with privacy and convenience in mind." />
+    <meta name="theme-color" content="#1a1e24" />
+    <meta property="og:title" content="Avahanaa – Quick Vehicle Notifications" />
+    <meta property="og:description" content="Reach a vehicle owner in seconds by scanning the sticker on their windscreen. No app, no phone number, nothing shared either way." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/logo.jpg" />
     <!-- Favicon -->
-    <link rel="icon" type="image/jpeg" href="./logo.jpg" />
-    <!-- Google Fonts for crisp, modern typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-    <!-- Bootswatch Flatly theme for a clean, modern palette -->
-    <!-- We load the base Bootstrap CSS first and then the Lux theme to override colours. -->
+    <link rel="icon" type="image/jpeg" href="/logo.jpg" />
+    <!--
+      Type. Plus Jakarta Sans for display, Inter for body and anything dense,
+      Noto Sans Kannada so the Kannada UI renders identically on every device
+      rather than falling to whatever the phone happens to have. These are the
+      three families `lib/theme/app_theme.dart` names, so the sticker, the app
+      and this page are set in the same faces.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap"
     />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.1/dist/flatly/bootstrap.min.css"
-    />
-    <!-- Bootstrap Icons -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-    />
-    <!-- Font Awesome (optional for richer iconography) -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <style>
-      /* Base layout */
-      body {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        background-color: #f8fafc;
-        font-family: 'Poppins', sans-serif;
-      }
-      /* Improve paragraph readability */
-      p {
-        line-height: 1.6;
-        margin-bottom: 1rem;
-      }
-      /* Hero section – a soothing gradient to complement the Flatly palette */
-      .hero {
-        /* Deep navy fading into bright teal for a modern look */
-        background: linear-gradient(135deg, #0a304e, #00a3cc);
-        color: #ffffff;
-        padding: 6rem 1rem;
-        text-align: center;
-      }
-      .hero h1 {
-        font-weight: 600;
-        margin-bottom: 0.75rem;
-        font-size: 2.6rem;
-      }
-      .hero p {
-        font-size: 1.1rem;
-        max-width: 700px;
-        margin: 0 auto;
-        opacity: 0.95;
-      }
-      /* Step icons styling */
-      .how-it-works .step-icon {
-        font-size: 2.7rem;
-        /* Use the Lux primary blue for icons */
-        color: #0d6efd;
-      }
-      /* Footer styling */
-      .footer {
-        background-color: #002b5c;
-        color: #f8fafc;
-        padding: 2.5rem 0;
-        margin-top: auto;
-      }
-      /* Notification / card container maximum width */
-      .notification-card {
-        max-width: 700px;
-        margin: 2rem auto;
-      }
-      /* Reason button grid styling */
-      .reason-buttons button {
-        border-radius: 0.5rem;
-        padding: 0.6rem 0.8rem;
-        font-size: 0.95rem;
-        text-align: left;
-        white-space: normal;
-        display: flex;
-        align-items: center;
-        transition: background-color 0.15s ease;
-      }
-      .reason-buttons button i {
-        margin-right: 0.6rem;
-      }
-      /* Selected reason button */
-      .reason-buttons button.active {
-        /* Use Flatly primary green for the selected state */
-        background-color: #18bc9c !important;
-        color: #ffffff !important;
-        border-color: #18bc9c !important;
-      }
-      /* Unselected reason buttons */
-      .reason-buttons button:not(.active) {
-        background-color: #ffffff;
-        border-color: #d1d8e0;
-        color: #2c3e50;
-      }
-      /* Hover effect for unselected buttons */
-      .reason-buttons button:not(.active):hover {
-        background-color: #ecf2f9;
-      }
-
-      /* Form controls styling for better contrast */
-      .form-control,
-      textarea.form-control {
-        background-color: #ffffff;
-        border-color: #cbd5e1;
-        color: #0d2b45;
-      }
-      .form-control:focus,
-      textarea.form-control:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-      }
-
-      /* Custom navbar colour to complement footer */
-      .navbar.bg-dark {
-        /* Align with footer dark hue */
-        background-color: #002b5c !important;
-      }
-    </style>
+    <!-- The Avahanaa design system. Shared with the legal pages. -->
+    <link rel="stylesheet" href="/theme.css" />
+    <script>
+      /*
+       * Theme, applied before the first paint.
+       *
+       * Deliberately inline and synchronous rather than part of the React
+       * bundle below: React here is transpiled in the browser by Babel, which
+       * means the app mounts a few hundred milliseconds in. Waiting for it to
+       * set the theme would show every dark-mode user a white flash on a page
+       * they most often open outdoors at night.
+       *
+       * `system` writes no attribute at all, leaving the media query in
+       * theme.css in charge — an explicit `light`/`dark` overrides it.
+       */
+      (function () {
+        try {
+          var stored = localStorage.getItem("avahanaa.theme");
+          if (stored === "light" || stored === "dark") {
+            document.documentElement.setAttribute("data-theme", stored);
+          }
+          var lang = localStorage.getItem("avahanaa.lang");
+          if (lang === "kn" || lang === "en") {
+            document.documentElement.setAttribute("lang", lang);
+          }
+        } catch (e) {
+          /* Private mode, or storage disabled. The defaults are correct. */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
@@ -150,10 +74,12 @@
 
     <script type="text/babel">
       // Avahanaa – Vehicle Notification Frontend
-      // This single-page application has three main pages: Home, Contact and Notify.
-      // QR codes can be scanned with the device camera or resolved manually through the URL parameters.
-      // Once a QR id is resolved the corresponding user's FCM token is fetched from Firestore.
-      // A notification is delivered by calling a Firebase Cloud Function that sends FCM securely.
+      //
+      // One React bundle serving every page: Home, Features, Plans, Notify,
+      // About and Contact, selected by `?page=`. QR codes are read with the
+      // device camera or resolved from the URL, and every lookup and send goes
+      // through `/api/*` — this page never touches Firestore for anything to
+      // do with an owner. See the data-access note further down for why.
 
       const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
@@ -555,8 +481,7 @@
        * but if this page said "that code exists but is switched off" it would
        * become a way to test which codes are real.
        */
-      const NOT_ACTIVE_MESSAGE =
-        "This code is not active. Please check you scanned an Avahanaa sticker.";
+      const NOT_ACTIVE_MESSAGE_KEY = "notifyNotActive";
 
       /**
        * In-flight GETs, keyed by path.
@@ -648,14 +573,6 @@
       }
 
       /**
-       * Sends the alert.
-       *
-       * The request carries a QR id, a reason code and a note — that is all
-       * the server accepts. It resolves the owner itself and pushes with its
-       * own credentials, so there is no title, no body and no token here to
-       * tamper with.
-       */
-      /**
        * Where the vehicle is, if the person scanning is willing to say.
        *
        * The owner's first question on getting an alert is "which car, and
@@ -720,7 +637,18 @@
         });
       }
 
-      async function triggerNotifyFunction(payload) {
+      /**
+       * Sends the alert.
+       *
+       * The request carries a QR id, a reason code and a note — that is all
+       * the server accepts. It resolves the owner itself and pushes with its
+       * own credentials, so there is no title, no body and no token here to
+       * tamper with.
+       *
+       * `t` is the caller's translator, so a failure is reported in the
+       * language the page is being read in. The wire format does not change.
+       */
+      async function triggerNotifyFunction(payload, t) {
         try {
           const response = await fetch("/api/notify", {
             method: "POST",
@@ -756,80 +684,1080 @@
           // The owner has been alerted already and this is a repeat within the
           // window. Saying so plainly matters: someone standing at the car who
           // thinks nothing happened will keep pressing the button.
+          //
+          // The server already sends `Retry-After`. Reading it turns "please
+          // give them a few minutes" — which is unfalsifiable, so it is read
+          // as a brush-off — into a clock that visibly runs down and a button
+          // that comes back on its own.
           if (response.status === 429) {
+            const retryHeader = Number(response.headers.get("Retry-After"));
             return {
               ok: false,
               alreadyAlerted: true,
-              message:
-                "The owner has already been alerted about this vehicle and is on their way. Please give them a few minutes.",
+              retryAfter:
+                Number.isFinite(retryHeader) && retryHeader > 0
+                  ? Math.min(retryHeader, 3600)
+                  : 0,
+              message: t("notifyRateLimited"),
             };
           }
 
           if (response.status === 404) {
-            return { ok: false, message: NOT_ACTIVE_MESSAGE };
+            return { ok: false, message: t(NOT_ACTIVE_MESSAGE_KEY) };
           }
 
           return {
             ok: false,
             message:
               (detail && detail.error && detail.error.message) ||
-              "We could not send that alert. Please try again.",
+              t("notifySendFailed"),
             code: code || "",
           };
         } catch (error) {
           console.error("Notification request failed", error);
           return {
             ok: false,
-            message:
-              "We could not reach Avahanaa. Please check your connection and try again.",
+            message: t("notifyOffline"),
           };
         }
       }
 
       /**
-       * Navbar component
+       * ---------------------------------------------------------------
+       * Language
+       * ---------------------------------------------------------------
+       *
+       * This ships in Bangalore. The person standing at the car may not read
+       * English, and they are doing the owner a favour — asking them to
+       * puzzle through a second language first is the wrong way round.
+       *
+       * The app carries a full Kannada localisation (`lib/l10n/`). The
+       * translations below are that file's strings where the two surfaces say
+       * the same thing — the seven reason codes especially, which are the
+       * words the owner will see on their phone and the scanner sees here, and
+       * which must not drift.
+       *
+       * Missing keys fall back to English rather than rendering blank or a key
+       * name. The scan path — hero, reasons, form, send, and every state of
+       * the waiting screen — is translated in full; the longer marketing and
+       * legal prose is not, and falls back. A half-translated *alert* would be
+       * a defect; a marketing paragraph in English is a gap.
        */
-      function Navbar() {
+      const LANGUAGES = [
+        { id: "en", label: "EN", name: "English" },
+        { id: "kn", label: "ಕನ್ನಡ", name: "Kannada" },
+      ];
+
+      const STRINGS = {
+        en: {
+          // Navigation ------------------------------------------------------
+          navHome: "Home",
+          navFeatures: "Features",
+          navPlans: "Plans",
+          navNotify: "Notify",
+          navAbout: "About",
+          navContact: "Contact",
+          navPrivacy: "Privacy",
+          navTerms: "Terms",
+          navMenu: "Menu",
+          navThemeLight: "Switch to light theme",
+          navThemeDark: "Switch to dark theme",
+          navLanguage: "Change language",
+
+          // The seven reason codes. These are the app's own words
+          // (`lib/l10n/app_localizations_en.dart`) — the label is what the
+          // owner reads on their phone, so the two sides must not drift. The
+          // hint below it is web-only: it is what tells the person at the car
+          // which of the seven their situation actually is.
+          reasonBlockingDriveway: "Blocking me in",
+          reasonIllegalParking: "Parked where it shouldn't be",
+          reasonBlockingTraffic: "Blocking the road",
+          reasonDoubleParked: "Double parked",
+          reasonEmergency: "Emergency",
+          reasonPrivateProperty: "On private property",
+          reasonOther: "Something else",
+
+          reasonBlockingDrivewayHint: "I can't get my vehicle or myself out",
+          reasonIllegalParkingHint: "No-parking zone, footpath, or a ramp",
+          reasonBlockingTrafficHint: "It's holding up the road",
+          reasonDoubleParkedHint: "Parked alongside another vehicle",
+          reasonEmergencyHint: "A crash, a fire, or someone inside",
+          reasonPrivatePropertyHint: "Parked on private land",
+          reasonOtherHint: "Lights on, alarm, flat tyre, a pet inside…",
+
+          // One-tap notes. Short enough to read at a glance and specific
+          // enough that the owner knows what to do without opening the app.
+          notePresetCantGetOut: "I can't get my vehicle out",
+          notePresetWaitingHere: "I'm waiting here by your vehicle",
+          notePresetNoRush: "No rush — whenever you can",
+          notePresetHoldingUp: "Traffic is backed up behind it",
+          notePresetPleaseHurry: "Please come as soon as you can",
+          notePresetTowRisk: "It looks like it may get towed",
+          notePresetPrivateMove: "Please move it off this property",
+          notePresetLightsOn: "Your headlights are on",
+          notePresetAlarm: "Your alarm is ringing",
+          notePresetFlatTyre: "One of your tyres is flat",
+          notePresetPetInside: "There is a pet inside",
+          notePresetWindowOpen: "A window is open",
+          notePresetTowTruck: "A tow truck is here",
+          notePresetDamage: "Your vehicle may have been damaged",
+          notePresetFallen: "Your vehicle has fallen over",
+          notePresetEmergencyHelp: "Someone needs help at your vehicle",
+          notePresetEmergencyCalled: "Emergency services have been called",
+
+          // The owner's replies, from `AlertReply.scannerLabel` in the app.
+          replyOmwNow: "The owner is on their way now",
+          replyOmw5: "The owner is on their way — about 5 minutes",
+          replyOmw15: "The owner is on their way — about 15 minutes",
+          replyCannotCome: "The owner has seen this but can't get there right now",
+          replySeen: "The owner has seen your alert",
+
+          // The alert itself, as the owner receives it ----------------------
+          //
+          // `previewTitle*` mirrors `TITLES` in functions/index.js so the
+          // preview shows the real headline. `body*` is the line underneath
+          // when the scanner adds no note of their own — and unlike the title
+          // it does go on the wire, so these are sentences a stranger would
+          // actually say, not category names.
+          previewTitleBlockingDriveway: "Your vehicle is blocking someone in",
+          previewTitleBlockingTraffic: "Your vehicle is blocking traffic",
+          previewTitleDoubleParked: "Your vehicle is double parked",
+          previewTitleIllegalParking: "Parking issue with your vehicle",
+          previewTitlePrivateProperty: "Your vehicle is on private property",
+          previewTitleEmergency: "Emergency at your vehicle",
+          previewTitleOther: "Someone needs you at your vehicle",
+
+          bodyBlockingDriveway:
+            "Your vehicle is blocking someone in — they can't get theirs out.",
+          bodyBlockingTraffic: "Your vehicle is holding up traffic on the road.",
+          bodyDoubleParked:
+            "Your vehicle is double parked and blocking another vehicle.",
+          bodyIllegalParking: "Your vehicle is parked somewhere it shouldn't be.",
+          bodyPrivateProperty: "Your vehicle is parked on private property.",
+          bodyEmergency: "There is an emergency at your vehicle. Please come now.",
+          bodyOther: "Someone needs you at your vehicle.",
+
+          // Home ------------------------------------------------------------
+          homeEyebrow: "Live on Google Play",
+          homeTitle: "Reach a vehicle owner in seconds. Reveal nothing.",
+          homeLead:
+            "A QR sticker on the windscreen lets any passer-by alert the owner — blocked driveway, lights left on, a tow truck arriving. No app to install, no phone number, and nothing shared in either direction.",
+          homeScan: "Scan QR",
+          homeScanning: "Starting…",
+          homeEnterPlate: "Enter a number plate",
+          homeHeroNote:
+            "Your camera stays on your device. Avahanaa only ever reads the code.",
+          homeScanHeading: "Scan the QR Code",
+          homeScanHelp:
+            "When prompted, allow camera access so we can read the Avahanaa QR code.",
+          homeChooseCamera: "Choose camera",
+          homeCameraPreparing: "Preparing camera… please allow access if prompted.",
+          homeTryAgain: "Try again",
+          homeCancel: "Cancel",
+          homeHowEyebrow: "How it works",
+          homeHowTitle: "Three steps, and the whole thing takes seconds",
+          homeStep1Title: "Generate QR",
+          homeStep1Body:
+            "Vehicle owners create an account in the app and get their unique QR code.",
+          homeStep2Title: "Scan & Send",
+          homeStep2Body:
+            "Others scan the QR to contact the owner and choose a reason like emergency or blocked driveway.",
+          homeStep3Title: "Notify Owner",
+          homeStep3Body:
+            "Owners receive an instant push notification on the app and can respond accordingly.",
+          homePromiseEyebrow: "The promise",
+          homePromiseTitle: "Neither side learns anything about the other",
+          homePromiseBody:
+            "The scanner never sees a name, a number or an email. The owner never sees who scanned. All either side gets is the one thing that resolves the moment: someone needs you at your vehicle, and someone is on their way.",
+          homeFeaturesTitle: "Built for the minute it is actually used in",
+          homeFeaturesLead:
+            "Someone is standing next to a stranger's car, annoyed, deciding how annoyed to be. Everything here exists to shorten that minute.",
+          homeSeeAll: "See all features",
+          homeCtaTitle: "Get a sticker on your windscreen",
+          homeCtaBody:
+            "Install the Avahanaa app, add your vehicle, and print the sticker sheet it generates. Three free full-strength alerts every 30 days, and an emergency is never metered.",
+          homeCtaPlans: "See what it costs",
+          homeCtaNotify: "Alert an owner now",
+
+          // Features --------------------------------------------------------
+          featTitle: "Everything Avahanaa does",
+          featLead:
+            "The app and this page are two halves of one product. This is the whole of it, on both sides of the windscreen.",
+          featScannerHeading: "For the person at the vehicle",
+          featOwnerHeading: "For the owner",
+          featPrivacyHeading: "What is never shared",
+
+          featNoAppTitle: "No app, no account",
+          featNoAppBody:
+            "Google Lens, the camera app, any QR reader. The sticker opens this page and the alert is two taps away.",
+          featReasonsTitle: "Seven reasons, one tap",
+          featReasonsBody:
+            "Blocking a driveway, blocking traffic, double parked, illegal parking, private property, an emergency, or something else entirely.",
+          featPlateTitle: "Number plate fallback",
+          featPlateBody:
+            "Sticker damaged or the camera refused? Type the registration number instead and the lookup runs server-side.",
+          featReplyTitle: "You see the answer",
+          featReplyBody:
+            "The owner taps a reply and this page updates without a reload — on their way now, five minutes, fifteen, or they cannot come.",
+          featCountdownTitle: "A clock, not a sentence",
+          featCountdownBody:
+            "\"About five minutes\" is stale the moment you read it. The estimate counts down while you wait, from the moment they actually replied.",
+          featLocationTitle: "Optional location",
+          featLocationBody:
+            "Asked only after you have chosen a reason, never required, and rounded to about 110 m before it is stored. Enough to find a parked car, not enough to follow you.",
+
+          featAlarmTitle: "It rings like an alarm",
+          featAlarmBody:
+            "A max-importance channel with a full-screen intent, not a notification that sits quietly in the shade.",
+          featRemindersTitle: "It keeps reminding",
+          featRemindersBody:
+            "Reminders at +3 and +15 minutes until the alert is opened, because a phone in a bag is the normal case.",
+          featRepliesOwnerTitle: "One-tap replies",
+          featRepliesOwnerBody:
+            "Answer straight from the lock screen — right here, five minutes, fifteen, or I cannot get there.",
+          featMultiVehicleTitle: "More than one vehicle",
+          featMultiVehicleBody:
+            "Each vehicle gets its own code and its own sticker, and every alert says which windscreen was scanned.",
+          featQuietHoursTitle: "Quiet hours",
+          featQuietHoursBody:
+            "Set a window and non-emergency alerts arrive without the alarm. They still arrive — a car towed at 3am is still reported.",
+          featStickerTitle: "A sticker sheet to print",
+          featStickerBody:
+            "The app lays out a printable sheet with the code, your vehicle, and instructions in English and Kannada.",
+          featInsightsTitle: "Alert history",
+          featInsightsBody:
+            "Every alert, its reason, when it arrived, and where — kept in the app so you can see a pattern in where you park.",
+          featLanguageTitle: "English and Kannada",
+          featLanguageBody:
+            "Both the app and this page. The sticker itself carries both, so the person reading it does not have to choose.",
+
+          privNeverPhone: "Your phone number",
+          privNeverEmail: "Your email address",
+          privNeverName: "Your name",
+          privNeverScanner: "Who scanned your sticker",
+          privNeverExact: "Anybody's exact location",
+          privNeverNote:
+            "The sticker carries a code, and the code resolves to a colour, a model and a plate — the three things already visible through the windscreen. Everything else stays on the server.",
+
+          // Plans -----------------------------------------------------------
+          plansTitle: "What it costs",
+          plansLead:
+            "Alerts are metered on the owner's side, not the scanner's. Two rules make that defensible, and both are enforced on the server rather than in the app.",
+          plansFreeName: "Free, forever",
+          plansFreePrice: "₹0",
+          plansFreePeriod: "always",
+          plansFreeItem1: "3 full-strength alerts every 30 days",
+          plansFreeItem2: "Unlimited emergency alerts",
+          plansFreeItem3: "One-tap replies and the reply channel",
+          plansFreeItem4: "Every vehicle, every sticker",
+          plansAdName: "Top up with attention",
+          plansAdPrice: "1 ad",
+          plansAdPeriod: "per alert",
+          plansAdItem1: "One rewarded ad earns one alert",
+          plansAdItem2: "Up to 12 credits banked at a time",
+          plansAdItem3: "Credits never expire while banked",
+          plansPlusName: "Avahanaa Plus",
+          plansPlusPrice: "₹349",
+          plansPlusPeriod: "per month",
+          plansPlusItem1: "The meter comes off entirely",
+          plansPlusItem2: "Weekly ₹129 · Monthly ₹349 · Yearly ₹1,999",
+          plansPlusItem3: "Quiet hours still honoured",
+          plansPlusItem4: "Cancel any time in Google Play",
+          plansPriceNote:
+            "Prices shown here are indicative. The figure that is charged is always the one Google Play shows you at checkout, in your own currency and with your own tax.",
+          plansRuleEmergencyTitle: "An emergency is never metered",
+          plansRuleEmergencyBody:
+            "A fire, a crash or an injury rings the phone at full volume whatever the balance says. The check happens before the balance is even read.",
+          plansRuleQuietTitle: "Running out never makes an owner uncontactable",
+          plansRuleQuietBody:
+            "At zero the alert is still written and still delivered — as a quiet notice rather than an alarm. What is withheld is the urgency, never the message.",
+          plansRuleScannerTitle: "The scanner is told nothing",
+          plansRuleScannerBody:
+            "Same response, same wording, same timing either way. The state of a stranger's subscription is not a passer-by's business.",
+          plansQuietHoursTitle: "Quiet hours work the same way",
+          plansQuietHoursBody:
+            "Inside the window a non-emergency alert arrives without the alarm. It is still written, still delivered and can still be replied to. Suppressing it would mean a vehicle towed at 3am goes unreported because of a preference set months ago — and subscribers get the same treatment, because somebody paying for unlimited alerts still asked not to be woken.",
+
+          // Notify ----------------------------------------------------------
+          //
+          // Written for the person who is actually here: someone whose way out
+          // is blocked by a vehicle they have never seen before, who has just
+          // pointed a camera at a sticker and has no idea what happens next.
+          // The old copy — "Alert the owner. Choose a reason and optionally
+          // leave a short note" — described the form. These describe the
+          // situation, and answer the three questions that stop somebody
+          // sending: is this the right vehicle, what will the owner get, and
+          // what does this cost me.
+          notifyTitle: "Blocked in? Tell the owner.",
+          notifyLead:
+            "Pick what's happening and their phone rings within seconds — like an alarm, not a quiet notification. You'll see their answer on this screen.",
+          notifyTitleGeneric: "Something up with this vehicle?",
+          notifyLeadGeneric:
+            "Tell the owner what you're seeing and their phone rings within seconds. You'll see their answer on this screen.",
+          notifyBadgeNoApp: "No app, no sign-up",
+          notifyBadgeAnon: "You stay anonymous",
+          notifyBadgeSeconds: "Rings in seconds",
+
+          notifyEnterTitle: "Which vehicle is in your way?",
+          notifyEnterBody:
+            "Type the number plate on the vehicle blocking you. If it carries an Avahanaa sticker, we'll reach the owner without showing you — or them — a phone number.",
+          notifyEnterLabel: "Number plate",
+          // No "e.g." prefix: the field is set in a monospaced plate face, and
+          // prose inside it reads as a mistake rather than as an example.
+          notifyEnterPlaceholder: "KA 05 MJ 1234",
+          notifyEnterHelp: "Spaces and dashes don't matter.",
+          notifyResolve: "Find owner",
+          notifyResolving: "Finding the vehicle…",
+          notifyResolvingNote: "This usually takes a second.",
+
+          // The confirmation card. Someone who scanned the wrong sticker in a
+          // row of parked bikes needs to catch that here, not after sending.
+          notifyVehicle: "The vehicle you scanned",
+          notifyIdentifier: "Sticker code",
+          notifyConfirmPrompt: "Is this the one in your way?",
+          notifyStickerActive: "Sticker active — the owner can be reached",
+          notifyStickerUnknown: "Checking this sticker…",
+          notifyWrongVehicle: "Not this one?",
+          notifyWrongVehicleHelp: "Scan the sticker on the vehicle that's actually blocking you.",
+
+          notifyStepReason: "What's happening?",
+          notifyStepNote: "Add a note",
+          notifyStepSend: "Send it",
+          notifyReasonLabel: "What's happening?",
+          notifyReasonHelp: "Pick the closest one. It becomes the headline on their phone.",
+
+          notifyNoteLabel: "Add a note",
+          notifyNoteOptional: "optional",
+          notifyNotePlaceholder: "Anything that would help them find you…",
+          notifyNoteRequiredLabel: "Tell them what's wrong",
+          notifyNoteRequiredPlaceholder: "e.g. your headlights are on",
+          notifyNotePresetsLabel: "Or tap one:",
+          notifyNoteCount: "{n} left",
+
+          // The preview. Nobody wants to set off an alarm on a stranger's
+          // phone without knowing how loud it is. Showing the exact words
+          // removes the last hesitation before sending — and no comparable
+          // product does it.
+          notifyPreviewLabel: "What they'll see",
+          notifyPreviewApp: "Avahanaa",
+          notifyPreviewNow: "now",
+          notifyPreviewEmpty: "Pick a reason above to see it.",
+
+          notifyShareContact: "Let them reply to me directly",
+          notifyShareContactHelp:
+            "Off by default. Leave it off and you stay completely anonymous — you'll still see their answer here.",
+          notifyContactLabel: "Phone or email",
+          notifyContactPlaceholder: "Only what you type here is shared",
+          notifyContactHelp:
+            "Sent with the alert, once. We don't store it against you and the owner can't look you up with it.",
+
+          notifySend: "Alert the owner",
+          notifySendEmergency: "Send emergency alert",
+          notifySending: "Sending…",
+          notifyPickReasonFirst: "Pick what's happening first",
+          notifyReady: "Ready when you are.",
+          notifyFetching: "Checking the sticker…",
+          notifySendingStatus: "Sending…",
+          notifySent: "Delivered to the owner's phone.",
+          notifySendFailed: "That didn't send. Tap to try again.",
+          notifyOffline:
+            "No connection. Check your mobile data or Wi-Fi and try again — nothing was sent.",
+
+          // Already alerted. Somebody who thinks nothing happened will keep
+          // pressing the button, so this says plainly that it worked and shows
+          // the clock rather than "a few minutes".
+          notifyRateLimited:
+            "This owner has already been alerted and is being reminded until they answer. Sending again won't reach them any faster.",
+          notifyRateLimitedWait: "You can send another in",
+          notifyRateLimitedReady: "You can send another alert now.",
+
+          notifyNotActive:
+            "This sticker isn't active. Check that it's an Avahanaa sticker and that you scanned the whole code.",
+          notifyNoRecord:
+            "No Avahanaa sticker is registered to that number plate. The owner may not use Avahanaa — or check the plate and try again.",
+          notifyNotLinked:
+            "This sticker hasn't been linked to an owner yet, so there's nobody to alert.",
+          notifyInactiveCode: "This sticker has been switched off by its owner.",
+          notifyScanOnly:
+            "Scan an Avahanaa sticker, or type the number plate, to reach an owner.",
+          notifyUnavailable:
+            "Avahanaa isn't reachable right now. Please try again in a moment.",
+          notifyDirectoryUnavailable:
+            "We couldn't check that sticker just now. Please try again in a moment.",
+          notifyNoQrRef:
+            "We lost track of which sticker this is. Pull down to refresh, or scan the code again.",
+          notifyRetry: "Try again",
+          notifyEnterPlateInstead: "Type the number plate instead",
+
+          notifyHowTitle: "What happens when you send",
+          notifyHow1:
+            "Their phone rings at full volume — a real alarm, even on silent, even from a pocket.",
+          notifyHow2:
+            "If they don't open it, it reminds them again at 3 and 15 minutes.",
+          notifyHow3:
+            "They tap one button to answer, and it appears on this screen.",
+          notifyHow4:
+            "Nothing about you reaches them, and nothing about them reaches you.",
+          notifyLocationNote:
+            "If you allow it, we send a rough location — rounded to about 110 m — so an owner with several vehicles knows which one you're standing at. Never required, and it never identifies you.",
+          notifyFreeNote: "Free for you. Always. There is nothing to sign up for.",
+
+          // Sent / waiting --------------------------------------------------
+          //
+          // This screen is the product. Somebody is standing next to a
+          // stranger's vehicle deciding how annoyed to be, and the moment they
+          // can see that a human is coming, the situation defuses itself. So
+          // the page waits with them and keeps reporting what it knows.
+          sentAlerted: "Alert sent",
+          sentDelivered: "It reached their phone",
+          sentRinging:
+            "Their phone is ringing now. Stay on this screen — their answer appears here the moment they tap it.",
+          sentWaiting: "Waiting for their answer",
+          sentElapsed: "waiting {time}",
+          sentTrailSent: "Sent",
+          sentTrailDelivered: "On their phone",
+          sentTrailReply: "Their answer",
+          sentKeepOpen: "Keeping this screen awake so you don't miss it.",
+
+          sentNoReplyYet:
+            "No answer yet — but it did reach their phone, and it keeps reminding them until they open it. Most owners answer within a few minutes.",
+          sentNoReplyWhatNow: "If you can't wait",
+          sentNoReplyStep1:
+            "The alert doesn't expire. They'll see it the moment they pick up their phone.",
+          sentNoReplyStep2:
+            "If you're genuinely stuck, this is the point to call local traffic police or building security.",
+          sentCheckAgain: "Check again",
+
+          sentOnTheWayNote:
+            "They're coming. Wait here or head off — either is fine, and they know now.",
+          sentSeenNote:
+            "They've read it. Thanks for taking the trouble to send it instead of just waiting.",
+          sentCannotComeNote:
+            "They've seen it but can't get there right now. Nothing more to wait for here — if you're blocked in, this is the point to get help on the ground.",
+          sentEtaLabel: "until they get here",
+          sentEtaNow: "they should be arriving now",
+          sentEtaAnyMoment: "Any moment",
+          sentThanks: "Thanks for sending it",
+          sentPrivacy:
+            "They never saw who you are. You never saw who they are. That was the whole point.",
+          sentDone: "Done",
+
+          // About / Contact -------------------------------------------------
+          aboutTitle: "About Avahanaa",
+          contactTitle: "Contact Us",
+          contactName: "Name",
+          contactEmail: "Email",
+          contactMessage: "Your message or review",
+          contactSend: "Send Message",
+          contactSending: "Sending…",
+          contactThanks:
+            "Thank you for your message! We appreciate your feedback and will get back to you shortly.",
+          contactUnavailable:
+            "Contact form is unavailable because Firebase is not configured.",
+          contactOffice: "Our Office",
+          contactCompany: "Company Info",
+
+          // Footer ----------------------------------------------------------
+          footerBlurb:
+            "A QR sticker on your windscreen that lets anyone reach you about your vehicle — without ever revealing your phone number.",
+          footerProduct: "Product",
+          footerLegal: "Legal",
+          footerRights: "© 2025 Avahanaa. All rights reserved.",
+          footerBuilt: "Built on Firebase and React.",
+          footerDeleteAccount: "Delete your account",
+        },
+
+        kn: {
+          navHome: "ಮುಖಪುಟ",
+          navFeatures: "ವೈಶಿಷ್ಟ್ಯಗಳು",
+          navPlans: "ಯೋಜನೆಗಳು",
+          navNotify: "ತಿಳಿಸಿ",
+          navAbout: "ನಮ್ಮ ಬಗ್ಗೆ",
+          navContact: "ಸಂಪರ್ಕಿಸಿ",
+          navPrivacy: "ಗೌಪ್ಯತೆ",
+          navTerms: "ನಿಯಮಗಳು",
+          navMenu: "ಮೆನು",
+          navThemeLight: "ಬೆಳಕಿನ ಥೀಮ್‌ಗೆ ಬದಲಿಸಿ",
+          navThemeDark: "ಕತ್ತಲೆ ಥೀಮ್‌ಗೆ ಬದಲಿಸಿ",
+          navLanguage: "ಭಾಷೆ ಬದಲಿಸಿ",
+
+          previewTitleBlockingDriveway: "ನಿಮ್ಮ ವಾಹನ ಯಾರೊಬ್ಬರ ದಾರಿ ತಡೆದಿದೆ",
+          previewTitleBlockingTraffic: "ನಿಮ್ಮ ವಾಹನ ಸಂಚಾರ ತಡೆದಿದೆ",
+          previewTitleDoubleParked: "ನಿಮ್ಮ ವಾಹನ ಡಬಲ್ ಪಾರ್ಕ್ ಆಗಿದೆ",
+          previewTitleIllegalParking: "ನಿಮ್ಮ ವಾಹನದ ಪಾರ್ಕಿಂಗ್ ಸಮಸ್ಯೆ",
+          previewTitlePrivateProperty: "ನಿಮ್ಮ ವಾಹನ ಖಾಸಗಿ ಜಾಗದಲ್ಲಿದೆ",
+          previewTitleEmergency: "ನಿಮ್ಮ ವಾಹನದ ಬಳಿ ತುರ್ತು ಪರಿಸ್ಥಿತಿ",
+          previewTitleOther: "ನಿಮ್ಮ ವಾಹನದ ಬಳಿ ಯಾರಿಗೋ ನೀವು ಬೇಕು",
+
+          bodyBlockingDriveway:
+            "ನಿಮ್ಮ ವಾಹನ ಯಾರೊಬ್ಬರ ದಾರಿ ತಡೆದಿದೆ — ಅವರಿಗೆ ತಮ್ಮ ವಾಹನ ಹೊರತೆಗೆಯಲು ಆಗುತ್ತಿಲ್ಲ.",
+          bodyBlockingTraffic: "ನಿಮ್ಮ ವಾಹನ ರಸ್ತೆಯಲ್ಲಿ ಸಂಚಾರ ತಡೆದಿದೆ.",
+          bodyDoubleParked:
+            "ನಿಮ್ಮ ವಾಹನ ಡಬಲ್ ಪಾರ್ಕ್ ಆಗಿ ಮತ್ತೊಂದು ವಾಹನವನ್ನು ತಡೆದಿದೆ.",
+          bodyIllegalParking: "ನಿಮ್ಮ ವಾಹನ ನಿಲ್ಲಿಸಬಾರದ ಜಾಗದಲ್ಲಿ ನಿಂತಿದೆ.",
+          bodyPrivateProperty: "ನಿಮ್ಮ ವಾಹನ ಖಾಸಗಿ ಜಾಗದಲ್ಲಿ ನಿಂತಿದೆ.",
+          bodyEmergency: "ನಿಮ್ಮ ವಾಹನದ ಬಳಿ ತುರ್ತು ಪರಿಸ್ಥಿತಿ ಇದೆ. ದಯವಿಟ್ಟು ಈಗಲೇ ಬನ್ನಿ.",
+          bodyOther: "ನಿಮ್ಮ ವಾಹನದ ಬಳಿ ಯಾರಿಗೋ ನೀವು ಬೇಕು.",
+
+          homeEyebrow: "Google Play ನಲ್ಲಿ ಲಭ್ಯ",
+          homeTitle: "ವಾಹನ ಮಾಲೀಕರನ್ನು ಕ್ಷಣಗಳಲ್ಲಿ ತಲುಪಿ. ಯಾವ ವಿವರವನ್ನೂ ಹಂಚದೆ.",
+          homeLead:
+            "ಗಾಜಿನ ಮೇಲಿನ QR ಸ್ಟಿಕರ್ ಮೂಲಕ ಯಾರಾದರೂ ಮಾಲೀಕರಿಗೆ ಎಚ್ಚರಿಕೆ ಕಳುಹಿಸಬಹುದು — ದಾರಿ ತಡೆದಿದೆ, ದೀಪ ಉರಿಯುತ್ತಿದೆ, ಅಥವಾ ಟೋಯಿಂಗ್ ವಾಹನ ಬಂದಿದೆ. ಆ್ಯಪ್ ಬೇಡ, ಫೋನ್ ನಂಬರ್ ಬೇಡ, ಎರಡೂ ಕಡೆಯಿಂದ ಯಾವ ವಿವರವೂ ಹಂಚಿಕೆಯಾಗುವುದಿಲ್ಲ.",
+          homeScan: "QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿ",
+          homeScanning: "ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ…",
+          homeEnterPlate: "ನಂಬರ್ ಪ್ಲೇಟ್ ನಮೂದಿಸಿ",
+          homeHeroNote:
+            "ನಿಮ್ಮ ಕ್ಯಾಮೆರಾ ನಿಮ್ಮ ಸಾಧನದಲ್ಲೇ ಇರುತ್ತದೆ. ಅವಾಹನಾ ಕೇವಲ ಕೋಡ್ ಅನ್ನು ಓದುತ್ತದೆ.",
+          homeScanHeading: "QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ",
+          homeScanHelp:
+            "ಕೇಳಿದಾಗ ಕ್ಯಾಮೆರಾ ಅನುಮತಿ ನೀಡಿ, ಆಗ ನಾವು ಅವಾಹನಾ QR ಕೋಡ್ ಓದಬಹುದು.",
+          homeChooseCamera: "ಕ್ಯಾಮೆರಾ ಆಯ್ಕೆಮಾಡಿ",
+          homeCameraPreparing: "ಕ್ಯಾಮೆರಾ ಸಿದ್ಧವಾಗುತ್ತಿದೆ… ಕೇಳಿದರೆ ಅನುಮತಿ ನೀಡಿ.",
+          homeTryAgain: "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+          homeCancel: "ರದ್ದುಮಾಡಿ",
+          homeHowEyebrow: "ಇದು ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ",
+          homeHowTitle: "ಮೂರು ಹಂತಗಳು, ಕೆಲವೇ ಕ್ಷಣಗಳು",
+          homeStep1Title: "QR ರಚಿಸಿ",
+          homeStep1Body:
+            "ವಾಹನ ಮಾಲೀಕರು ಆ್ಯಪ್‌ನಲ್ಲಿ ಖಾತೆ ತೆರೆದು ತಮ್ಮದೇ QR ಕೋಡ್ ಪಡೆಯುತ್ತಾರೆ.",
+          homeStep2Title: "ಸ್ಕ್ಯಾನ್ ಮಾಡಿ ಕಳುಹಿಸಿ",
+          homeStep2Body:
+            "ಇತರರು QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿ ಕಾರಣ ಆಯ್ಕೆಮಾಡಿ ಮಾಲೀಕರನ್ನು ಸಂಪರ್ಕಿಸುತ್ತಾರೆ.",
+          homeStep3Title: "ಮಾಲೀಕರಿಗೆ ತಿಳಿಸಿ",
+          homeStep3Body:
+            "ಮಾಲೀಕರಿಗೆ ತಕ್ಷಣ ಆ್ಯಪ್‌ನಲ್ಲಿ ಸೂಚನೆ ಬರುತ್ತದೆ ಮತ್ತು ಅವರು ಪ್ರತಿಕ್ರಿಯಿಸಬಹುದು.",
+          homePromiseEyebrow: "ನಮ್ಮ ಭರವಸೆ",
+          homePromiseTitle: "ಎರಡೂ ಕಡೆಯವರಿಗೆ ಪರಸ್ಪರ ಏನೂ ತಿಳಿಯುವುದಿಲ್ಲ",
+          homePromiseBody:
+            "ಸ್ಕ್ಯಾನ್ ಮಾಡಿದವರಿಗೆ ಹೆಸರು, ನಂಬರ್ ಅಥವಾ ಇಮೇಲ್ ಕಾಣುವುದಿಲ್ಲ. ಮಾಲೀಕರಿಗೆ ಯಾರು ಸ್ಕ್ಯಾನ್ ಮಾಡಿದರೆಂದು ಗೊತ್ತಾಗುವುದಿಲ್ಲ. ಆ ಕ್ಷಣಕ್ಕೆ ಬೇಕಾದ ಒಂದೇ ಮಾಹಿತಿ ಎರಡೂ ಕಡೆ ತಲುಪುತ್ತದೆ.",
+          homeCtaNotify: "ಈಗ ಮಾಲೀಕರಿಗೆ ತಿಳಿಸಿ",
+
+          // The seven reason codes, from `lib/l10n/app_localizations_kn.dart`.
+          // These are the words the owner sees on their phone; the two sides
+          // must not drift.
+          reasonBlockingDriveway: "ನನ್ನ ದಾರಿ ತಡೆದಿದೆ",
+          reasonIllegalParking: "ನಿಲ್ಲಿಸಬಾರದ ಜಾಗದಲ್ಲಿ",
+          reasonBlockingTraffic: "ರಸ್ತೆ ತಡೆದಿದೆ",
+          reasonDoubleParked: "ಡಬಲ್ ಪಾರ್ಕಿಂಗ್",
+          reasonEmergency: "ತುರ್ತು",
+          reasonPrivateProperty: "ಖಾಸಗಿ ಜಾಗದಲ್ಲಿ",
+          reasonOther: "ಬೇರೆ ಏನೋ",
+
+          reasonBlockingDrivewayHint: "ನನ್ನ ವಾಹನವನ್ನು ಹೊರತೆಗೆಯಲು ಆಗುತ್ತಿಲ್ಲ",
+          reasonIllegalParkingHint: "ನೋ-ಪಾರ್ಕಿಂಗ್, ಫುಟ್‌ಪಾತ್ ಅಥವಾ ರ್‍ಯಾಂಪ್",
+          reasonBlockingTrafficHint: "ಸಂಚಾರಕ್ಕೆ ಅಡ್ಡಿಯಾಗಿದೆ",
+          reasonDoubleParkedHint: "ಮತ್ತೋಂದು ವಾಹನದ ಪಕ್ಕದಲ್ಲಿ ನಿಂತಿದೆ",
+          reasonEmergencyHint: "ಅಪಘಾತ, ಬೆಂಕಿ ಅಥವಾ ಒಳಗೆ ಯಾರಾದರೂ",
+          reasonPrivatePropertyHint: "ಖಾಸಗಿ ಜಾಗದಲ್ಲಿ ನಿಂತಿದೆ",
+          reasonOtherHint: "ದೀಪ, ಅಲಾರಂ, ಪಂಕ್ಚರ್, ಒಳಗೆ ಸಾಕುಪ್ರಾಣಿ…",
+
+          // ಒಂದೇ ಟ್ಯಾಪ್‌ನ ಟಿಪ್ಪಣಿಗಳು.
+          notePresetCantGetOut: "ನನ್ನ ವಾಹನವನ್ನು ಹೊರತೆಗೆಯಲು ಆಗುತ್ತಿಲ್ಲ",
+          notePresetWaitingHere: "ನಾನು ನಿಮ್ಮ ವಾಹನದ ಬಳಿ ಕಾಯುತ್ತಿದ್ದೇನೆ",
+          notePresetNoRush: "ಆತುರವಿಲ್ಲ — ನಿಮಗೆ ಆದಾಗ ಬನ್ನಿ",
+          notePresetHoldingUp: "ಹಿಂದೆ ಸಂಚಾರ ನಿಂತಿದೆ",
+          notePresetPleaseHurry: "ದಯವಿಟ್ಟು ಬೇಗ ಬನ್ನಿ",
+          notePresetTowRisk: "ಟೋ ಆಗುವ ಸಾಧ್ಯತೆ ಇದೆ",
+          notePresetPrivateMove: "ದಯವಿಟ್ಟು ಈ ಜಾಗದಿಂದ ಸರಿಸಿ",
+          notePresetLightsOn: "ನಿಮ್ಮ ಹೆಡ್‌ಲೈಟ್ ಉರಿಯುತ್ತಿದೆ",
+          notePresetAlarm: "ನಿಮ್ಮ ಅಲಾರಂ ಸದ್ದು ಮಾಡುತ್ತಿದೆ",
+          notePresetFlatTyre: "ನಿಮ್ಮ ಟಯರ್ ಪಂಕ್ಚರ್ ಆಗಿದೆ",
+          notePresetPetInside: "ಒಳಗೆ ಸಾಕುಪ್ರಾಣಿ ಇದೆ",
+          notePresetWindowOpen: "ಕಿಟಕಿ ತೆರೆದಿದೆ",
+          notePresetTowTruck: "ಟೋಯಿಂಗ್ ವಾಹನ ಬಂದಿದೆ",
+          notePresetDamage: "ನಿಮ್ಮ ವಾಹನಕ್ಕೆ ಹಾನಿಯಾಗಿರಬಹುದು",
+          notePresetFallen: "ನಿಮ್ಮ ವಾಹನ ಬಿದ್ದಿದೆ",
+          notePresetEmergencyHelp: "ನಿಮ್ಮ ವಾಹನದ ಬಳಿ ಯಾರಿಗೋ ಸಹಾಯ ಬೇಕು",
+          notePresetEmergencyCalled: "ತುರ್ತು ಸೇವೆಗೆ ಕರೆ ಮಾಡಲಾಗಿದೆ",
+
+          notifyTitle: "ದಾರಿ ತಡೆದಿದೆಯೇ? ಮಾಲೀಕರಿಗೆ ತಿಳಿಸಿ.",
+          notifyLead:
+            "ಏನಾಗುತ್ತಿದೆ ಎಂದು ಆಯ್ಕೆಮಾಡಿ — ಕ್ಷಣಗಳಲ್ಲಿ ಅವರ ಫೋನ್ ಅಲಾರಂನಂತೆ ಸದ್ದು ಮಾಡುತ್ತದೆ. ಅವರ ಉತ್ತರ ಇದೇ ಪರದೆಯಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.",
+          notifyTitleGeneric: "ಈ ವಾಹನದಲ್ಲಿ ಏನಾದರೂ ತೊಂದರೆ ಇದೆಯೇ?",
+          notifyLeadGeneric:
+            "ನೀವು ನೋಡುತ್ತಿರುವುದನ್ನು ಮಾಲೀಕರಿಗೆ ತಿಳಿಸಿ — ಕ್ಷಣಗಳಲ್ಲಿ ಅವರ ಫೋನ್ ಸದ್ದು ಮಾಡುತ್ತದೆ. ಅವರ ಉತ್ತರ ಇದೇ ಪರದೆಯಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.",
+          notifyBadgeNoApp: "ಆ್ಯಪ್ ಬೇಡ, ನೋಂದಣಿ ಬೇಡ",
+          notifyBadgeAnon: "ನೀವು ಅನಾಮಧೇಯರಾಗಿಯೇ ಇರುತ್ತೀರಿ",
+          notifyBadgeSeconds: "ಕ್ಷಣಗಳಲ್ಲಿ ಸದ್ದು",
+
+          notifyEnterTitle: "ಯಾವ ವಾಹನ ನಿಮ್ಮ ದಾರಿಯಲ್ಲಿದೆ?",
+          notifyEnterBody:
+            "ದಾರಿ ತಡೆದಿರುವ ವಾಹನದ ನಂಬರ್ ಪ್ಲೇಟ್ ನಮೂದಿಸಿ. ಅದರ ಮೇಲೆ ಅವಾಹನಾ ಸ್ಟಿಕರ್ ಇದ್ದರೆ, ಯಾವ ಫೋನ್ ನಂಬರ್ ಅನ್ನೂ ತೋರಿಸದೆ ನಾವು ಮಾಲೀಕರನ್ನು ತಲುಪುತ್ತೇವೆ.",
+          notifyEnterLabel: "ನಂಬರ್ ಪ್ಲೇಟ್",
+          notifyEnterPlaceholder: "KA 05 MJ 1234",
+          notifyEnterHelp: "ಸ್ಪೇಸ್ ಅಥವಾ ಡ್ಯಾಶ್ ಇದ್ದರೂ ತೊಂದರೆಯಿಲ್ಲ.",
+          notifyResolve: "ಮಾಲೀಕರನ್ನು ಹುಡುಕಿ",
+          notifyResolving: "ವಾಹನ ಹುಡುಕಲಾಗುತ್ತಿದೆ…",
+          notifyResolvingNote: "ಸಾಮಾನ್ಯವಾಗಿ ಒಂದು ಕ್ಷಣ ಸಾಕು.",
+
+          notifyVehicle: "ನೀವು ಸ್ಕ್ಯಾನ್ ಮಾಡಿದ ವಾಹನ",
+          notifyIdentifier: "ಸ್ಟಿಕರ್ ಕೋಡ್",
+          notifyConfirmPrompt: "ನಿಮ್ಮ ದಾರಿಯಲ್ಲಿ ಇರುವುದು ಇದೇ ವಾಹನವೇ?",
+          notifyStickerActive: "ಸ್ಟಿಕರ್ ಸಕ್ರಿಯವಾಗಿದೆ — ಮಾಲೀಕರನ್ನು ತಲುಪಬಹುದು",
+          notifyStickerUnknown: "ಸ್ಟಿಕರ್ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ…",
+          notifyWrongVehicle: "ಇದು ಅಲ್ಲವೇ?",
+          notifyWrongVehicleHelp: "ನಿಜವಾಗಿ ದಾರಿ ತಡೆದಿರುವ ವಾಹನದ ಸ್ಟಿಕರ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ.",
+
+          notifyStepReason: "ಏನಾಗುತ್ತಿದೆ?",
+          notifyStepNote: "ಟಿಪ್ಪಣಿ ಸೇರಿಸಿ",
+          notifyStepSend: "ಕಳುಹಿಸಿ",
+          notifyReasonLabel: "ಏನಾಗುತ್ತಿದೆ?",
+          notifyReasonHelp: "ಹತ್ತಿರದ್ದನ್ನು ಆಯ್ಕೆಮಾಡಿ. ಇದೇ ಅವರ ಫೋನ್‌ನಲ್ಲಿ ಶೀರ್ಷಿಕೆಯಾಗುತ್ತದೆ.",
+
+          notifyNoteLabel: "ಟಿಪ್ಪಣಿ ಸೇರಿಸಿ",
+          notifyNoteOptional: "ಐಚ್ಛಿಕ",
+          notifyNotePlaceholder: "ಅವರಿಗೆ ನಿಮ್ಮನ್ನು ಹುಡುಕಲು ಸಹಾಯವಾಗುವ ವಿವರ…",
+          notifyNoteRequiredLabel: "ಏನು ತೊಂದರೆ ಎಂದು ತಿಳಿಸಿ",
+          notifyNoteRequiredPlaceholder: "ಉದಾ. ನಿಮ್ಮ ಹೆಡ್‌ಲೈಟ್ ಉರಿಯುತ್ತಿದೆ",
+          notifyNotePresetsLabel: "ಅಥವಾ ಒಂದನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ:",
+          notifyNoteCount: "{n} ಉಳಿದಿದೆ",
+
+          notifyPreviewLabel: "ಅವರಿಗೆ ಏನು ಕಾಣಿಸುತ್ತದೆ",
+          notifyPreviewApp: "ಅವಾಹನಾ",
+          notifyPreviewNow: "ಈಗ",
+          notifyPreviewEmpty: "ಮೇಲೆ ಒಂದು ಕಾರಣ ಆಯ್ಕೆಮಾಡಿದರೆ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.",
+
+          notifyShareContact: "ಅವರು ನನಗೆ ನೇರವಾಗಿ ಉತ್ತರಿಸಲಿ",
+          notifyShareContactHelp:
+            "ಇದು ಪೂರ್ವನಿಯೋಜಿತವಾಗಿ ಆಫ್ ಇದೆ. ಆಫ್ ಇಟ್ಟರೆ ನೀವು ಸಂಪೂರ್ಣ ಅನಾಮಧೇಯರು — ಆದರೂ ಅವರ ಉತ್ತರ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.",
+          notifyContactLabel: "ಫೋನ್ ಅಥವಾ ಇಮೇಲ್",
+          notifyContactPlaceholder: "ನೀವು ಇಲ್ಲಿ ಬರೆದದ್ದು ಮಾತ್ರ ಹಂಚಿಕೆಯಾಗುತ್ತದೆ",
+          notifyContactHelp:
+            "ಎಚ್ಚರಿಕೆಯ ಜೊತೆ ಒಮ್ಮೆ ಮಾತ್ರ ಕಳುಹಿಸಲಾಗುತ್ತದೆ. ನಾವು ಅದನ್ನು ನಿಮ್ಮ ಹೆಸರಿನಲ್ಲಿ ಉಳಿಸುವುದಿಲ್ಲ.",
+
+          notifySend: "ಮಾಲೀಕರಿಗೆ ತಿಳಿಸಿ",
+          notifySendEmergency: "ತುರ್ತು ಎಚ್ಚರಿಕೆ ಕಳುಹಿಸಿ",
+          notifySending: "ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ…",
+          notifyPickReasonFirst: "ಮೊದಲು ಏನಾಗುತ್ತಿದೆ ಎಂದು ಆಯ್ಕೆಮಾಡಿ",
+          notifyReady: "ನೀವು ಸಿದ್ಧರಾದಾಗ ಕಳುಹಿಸಿ.",
+          notifyFetching: "ಸ್ಟಿಕರ್ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ…",
+          notifySendingStatus: "ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ…",
+          notifySent: "ಮಾಲೀಕರ ಫೋನ್‌ಗೆ ತಲುಪಿದೆ.",
+          notifySendFailed: "ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ.",
+          notifyOffline:
+            "ಸಂಪರ್ಕವಿಲ್ಲ. ಡೇಟಾ ಅಥವಾ ವೈ-ಫೈ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ — ಏನೂ ಕಳುಹಿಸಿಲ್ಲ.",
+
+          notifyRateLimited:
+            "ಈ ಮಾಲೀಕರಿಗೆ ಈಗಾಗಲೇ ತಿಳಿಸಲಾಗಿದೆ, ಅವರು ಉತ್ತರಿಸುವವರೆಗೂ ನೆನಪಿಸಲಾಗುತ್ತಿದೆ. ಮತ್ತೆ ಕಳುಹಿಸಿದರೆ ಬೇಗ ತಲುಪುವುದಿಲ್ಲ.",
+          notifyRateLimitedWait: "ಇನ್ನೊಂದು ಕಳುಹಿಸಲು ಕಾಯಿರಿ",
+          notifyRateLimitedReady: "ಈಗ ಇನ್ನೊಂದು ಎಚ್ಚರಿಕೆ ಕಳುಹಿಸಬಹುದು.",
+
+          notifyNotActive:
+            "ಈ ಸ್ಟಿಕರ್ ಸಕ್ರಿಯವಾಗಿಲ್ಲ. ಇದು ಅವಾಹನಾ ಸ್ಟಿಕರ್ ಹೌದೇ ಮತ್ತು ಪೂರ್ತಿ ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಆಗಿದೆಯೇ ಪರಿಶೀಲಿಸಿ.",
+          notifyNoRecord:
+            "ಆ ನಂಬರ್ ಪ್ಲೇಟ್‌ಗೆ ಯಾವ ಅವಾಹನಾ ಸ್ಟಿಕರ್ ಕೂಡ ನೋಂದಣಿಯಾಗಿಲ್ಲ. ಮಾಲೀಕರು ಅವಾಹನಾ ಬಳಸದಿರಬಹುದು — ಅಥವಾ ಪ್ಲೇಟ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+          notifyNotLinked:
+            "ಈ ಸ್ಟಿಕರ್ ಇನ್ನೂ ಯಾವ ಮಾಲೀಕರಿಗೂ ಜೋಡಣೆಯಾಗಿಲ್ಲ, ಹಾಗಾಗಿ ತಿಳಿಸಲು ಯಾರೂ ಇಲ್ಲ.",
+          notifyInactiveCode: "ಈ ಸ್ಟಿಕರ್ ಅನ್ನು ಮಾಲೀಕರು ಆಫ್ ಮಾಡಿದ್ದಾರೆ.",
+          notifyScanOnly:
+            "ಮಾಲೀಕರನ್ನು ತಲುಪಲು ಅವಾಹನಾ ಸ್ಟಿಕರ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ, ಅಥವಾ ನಂಬರ್ ಪ್ಲೇಟ್ ನಮೂದಿಸಿ.",
+          notifyUnavailable:
+            "ಅವಾಹನಾ ಸದ್ಯಕ್ಕೆ ತಲುಪುತ್ತಿಲ್ಲ. ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಪ್ರಯತ್ನಿಸಿ.",
+          notifyDirectoryUnavailable:
+            "ಆ ಸ್ಟಿಕರ್ ಅನ್ನು ಈಗ ಪರಿಶೀಲಿಸಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಪ್ರಯತ್ನಿಸಿ.",
+          notifyNoQrRef:
+            "ಇದು ಯಾವ ಸ್ಟಿಕರ್ ಎಂದು ಗೊತ್ತಾಗುತ್ತಿಲ್ಲ. ಪುಟ ರಿಫ್ರೆಶ್ ಮಾಡಿ ಅಥವಾ ಮತ್ತೆ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ.",
+          notifyRetry: "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+          notifyEnterPlateInstead: "ಬದಲಿಗೆ ನಂಬರ್ ಪ್ಲೇಟ್ ನಮೂದಿಸಿ",
+
+          notifyHowTitle: "ಕಳುಹಿಸಿದಾಗ ಏನಾಗುತ್ತದೆ",
+          notifyHow1:
+            "ಅವರ ಫೋನ್ ಪೂರ್ಣ ಶಬ್ದದಲ್ಲಿ ಸದ್ದು ಮಾಡುತ್ತದೆ — ಸೈಲೆಂಟ್‌ನಲ್ಲಿದ್ದರೂ, ಜೇಬಿನಲ್ಲಿದ್ದರೂ.",
+          notifyHow2:
+            "ಅವರು ತೆರೆಯದಿದ್ದರೆ, 3 ಮತ್ತು 15 ನಿಮಿಷಗಳಲ್ಲಿ ಮತ್ತೆ ನೆನಪಿಸುತ್ತದೆ.",
+          notifyHow3:
+            "ಅವರು ಒಂದೇ ಬಟನ್ ಒತ್ತಿ ಉತ್ತರಿಸುತ್ತಾರೆ, ಅದು ಇದೇ ಪರದೆಯಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.",
+          notifyHow4:
+            "ನಿಮ್ಮ ಬಗ್ಗೆ ಯಾವ ವಿವರವೂ ಅವರಿಗೆ ಹೋಗುವುದಿಲ್ಲ, ಅವರ ಬಗ್ಗೆ ನಿಮಗೂ ಬರುವುದಿಲ್ಲ.",
+          notifyLocationNote:
+            "ನೀವು ಅನುಮತಿಸಿದರೆ ಸುಮಾರು 110 ಮೀ ವರೆಗೆ ದುಂಡಗಾದ ಸ್ಥಳ ಕಳುಹಿಸುತ್ತೇವೆ, ಹಲವು ವಾಹನ ಇರುವ ಮಾಲೀಕರಿಗೆ ಯಾವುದು ಎಂದು ತಿಳಿಯಲು. ಇದು ಕಡ್ಡಾಯವಲ್ಲ, ಮತ್ತು ಇದು ನಿಮ್ಮ ಗುರುತನ್ನು ಹೇಳುವುದಿಲ್ಲ.",
+          notifyFreeNote: "ನಿಮಗೆ ಸಂಪೂರ್ಣ ಉಚಿತ. ನೋಂದಣಿ ಬೇಡ.",
+
+          sentAlerted: "ಎಚ್ಚರಿಕೆ ಕಳುಹಿಸಲಾಗಿದೆ",
+          sentDelivered: "ಅವರ ಫೋನ್ ತಲುಪಿದೆ",
+          sentRinging:
+            "ಅವರ ಫೋನ್ ಈಗ ಸದ್ದು ಮಾಡುತ್ತಿದೆ. ಇದೇ ಪರದೆಯಲ್ಲಿ ಇರಿ — ಅವರು ಒತ್ತಿದ ಕ್ಷಣ ಉತ್ತರ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.",
+          sentWaiting: "ಅವರ ಉತ್ತರಕ್ಕಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ",
+          sentElapsed: "{time} ಕಾಯುತ್ತಿದ್ದೀರಿ",
+          sentTrailSent: "ಕಳುಹಿಸಿದೆ",
+          sentTrailDelivered: "ಅವರ ಫೋನ್‌ನಲ್ಲಿ",
+          sentTrailReply: "ಅವರ ಉತ್ತರ",
+          sentKeepOpen: "ನೀವು ತಪ್ಪಿಸಿಕೊಳ್ಳದಂತೆ ಪರದೆ ಆನ್ ಇಡಲಾಗಿದೆ.",
+
+          sentNoReplyYet:
+            "ಇನ್ನೂ ಉತ್ತರ ಬಂದಿಲ್ಲ — ಆದರೆ ಅದು ಅವರ ಫೋನ್ ತಲುಪಿದೆ ಮತ್ತು ಅವರು ತೆರೆಯುವವರೆಗೂ ನೆನಪಿಸುತ್ತಲೇ ಇರುತ್ತದೆ. ಹೆಚ್ಚಿನ ಮಾಲೀಕರು ಕೆಲವೇ ನಿಮಿಷಗಳಲ್ಲಿ ಉತ್ತರಿಸುತ್ತಾರೆ.",
+          sentNoReplyWhatNow: "ನಿಮಗೆ ಕಾಯಲು ಆಗದಿದ್ದರೆ",
+          sentNoReplyStep1:
+            "ಎಚ್ಚರಿಕೆ ಅಳಿಸಿಹೋಗುವುದಿಲ್ಲ. ಅವರು ಫೋನ್ ಕೈಗೆತ್ತಿಕೊಂಡ ಕ್ಷಣ ಅದು ಕಾಣಿಸುತ್ತದೆ.",
+          sentNoReplyStep2:
+            "ನಿಜವಾಗಿಯೂ ಸಿಕ್ಕಿಹಾಕಿಕೊಂಡಿದ್ದರೆ, ಸಂಚಾರ ಪೊಲೀಸ್ ಅಥವಾ ಕಟ್ಟಡದ ಭದ್ರತೆಗೆ ಕರೆ ಮಾಡುವ ಸಮಯ ಇದು.",
+          sentCheckAgain: "ಮತ್ತೆ ಪರಿಶೀಲಿಸಿ",
+
+          sentOnTheWayNote:
+            "ಅವರು ಬರುತ್ತಿದ್ದಾರೆ. ಕಾಯಬಹುದು ಅಥವಾ ಹೊರಡಬಹುದು — ಅವರಿಗೆ ಈಗ ತಿಳಿದಿದೆ.",
+          sentSeenNote:
+            "ಅವರು ಓದಿದ್ದಾರೆ. ಸುಮ್ಮನೆ ಕಾಯದೆ ತಿಳಿಸಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು.",
+          sentCannotComeNote:
+            "ಅವರು ನೋಡಿದ್ದಾರೆ ಆದರೆ ಈಗ ಬರಲಾಗುತ್ತಿಲ್ಲ. ಇಲ್ಲಿ ಕಾಯುವುದರಿಂದ ಪ್ರಯೋಜನವಿಲ್ಲ — ದಾರಿ ತಡೆದಿದ್ದರೆ ಸ್ಥಳೀಯ ಸಹಾಯ ಪಡೆಯುವ ಸಮಯ ಇದು.",
+          sentEtaLabel: "ಅವರು ಬರುವವರೆಗೆ",
+          sentEtaNow: "ಅವರು ಈಗ ಬರುತ್ತಿರಬೇಕು",
+          sentEtaAnyMoment: "ಯಾವ ಕ್ಷಣದಲ್ಲಾದರೂ",
+          sentThanks: "ಕಳುಹಿಸಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು",
+          sentPrivacy:
+            "ನೀವು ಯಾರೆಂದು ಅವರಿಗೆ ಗೊತ್ತಾಗಲಿಲ್ಲ. ಅವರು ಯಾರೆಂದು ನಿಮಗೂ ಗೊತ್ತಾಗಲಿಲ್ಲ. ಅದೇ ಇದರ ಉದ್ದೇಶ.",
+          sentDone: "ಮುಗಿಯಿತು",
+
+          // The owner's replies, from `AlertReply.scannerLabel` in the app.
+          replyOmwNow: "ಮಾಲೀಕರು ಈಗಲೇ ಬರುತ್ತಿದ್ದಾರೆ",
+          replyOmw5: "ಮಾಲೀಕರು ಬರುತ್ತಿದ್ದಾರೆ — ಸುಮಾರು 5 ನಿಮಿಷ",
+          replyOmw15: "ಮಾಲೀಕರು ಬರುತ್ತಿದ್ದಾರೆ — ಸುಮಾರು 15 ನಿಮಿಷ",
+          replyCannotCome: "ಮಾಲೀಕರು ನೋಡಿದ್ದಾರೆ ಆದರೆ ಈಗ ಬರಲಾಗುತ್ತಿಲ್ಲ",
+          replySeen: "ಮಾಲೀಕರು ನಿಮ್ಮ ಎಚ್ಚರಿಕೆ ನೋಡಿದ್ದಾರೆ",
+
+          contactTitle: "ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ",
+          contactName: "ಹೆಸರು",
+          contactEmail: "ಇಮೇಲ್",
+          contactMessage: "ನಿಮ್ಮ ಸಂದೇಶ ಅಥವಾ ಅಭಿಪ್ರಾಯ",
+          contactSend: "ಸಂದೇಶ ಕಳುಹಿಸಿ",
+          contactSending: "ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ…",
+        },
+      };
+
+      /** Falls back to English rather than rendering a key name. */
+      function translate(lang, key) {
+        const table = STRINGS[lang] || STRINGS.en;
+        if (Object.prototype.hasOwnProperty.call(table, key)) return table[key];
+        return STRINGS.en[key] != null ? STRINGS.en[key] : key;
+      }
+
+      const LanguageContext = React.createContext({
+        lang: "en",
+        setLang: () => {},
+        t: (key) => translate("en", key),
+      });
+
+      function useT() {
+        return React.useContext(LanguageContext);
+      }
+
+      function readStored(key, fallback) {
+        try {
+          const value = localStorage.getItem(key);
+          return value == null ? fallback : value;
+        } catch (err) {
+          return fallback;
+        }
+      }
+
+      function writeStored(key, value) {
+        try {
+          localStorage.setItem(key, value);
+        } catch (err) {
+          /* Private mode. The choice simply does not persist. */
+        }
+      }
+
+      /**
+       * ---------------------------------------------------------------
+       * Reasons
+       * ---------------------------------------------------------------
+       *
+       * The seven codes in `docs/backend_contract.md`, and only those. The
+       * server rejects anything else outright (`REASONS` in
+       * `functions/index.js`) and the app renders these and only these
+       * (`NotificationModel.reasonTextIn`).
+       *
+       * This list used to be six friendly sentences that collapsed onto three
+       * codes — "your headlights are on", "your alarm is ringing" and "there
+       * is a pet inside" all went out as `other`, so the owner's phone said
+       * "Someone needs you at your vehicle" for every one of them. The
+       * situations did not disappear; they moved into the hint under `other`,
+       * where they belong, and the six codes the app can actually name now get
+       * named.
+       *
+       * `emergency` is the only one that is never metered, and it is styled
+       * apart because red here means an alert, not emphasis.
+       */
+      /*
+       * The seven reasons, in the order somebody standing at the vehicle will
+       * want them.
+       *
+       * `code` is the wire value and is frozen: the owner's phone renders the
+       * notification title from it (`FCMService._titleFromReason`), so a code
+       * this page invents arrives untitled. `key` is only what the *scanner*
+       * reads, which never crosses the wire — so the labels below are free to
+       * describe the situation rather than the violation.
+       *
+       * `blocking_driveway` leads, and is labelled "Blocking me in" rather
+       * than "Blocking Driveway". The commonest real scan is not a suburban
+       * driveway: it is a two-wheeler boxed in by another two-wheeler outside
+       * a shop. Titled as a driveway, that person read all seven tiles, found
+       * nothing that matched, and picked "Other" — which reaches the owner as
+       * the generic "someone needs you at your vehicle" and loses the one fact
+       * that would have made them hurry.
+       */
+      const REASON_OPTIONS = [
+        { code: "blocking_driveway", icon: "\u{1F6F5}", key: "reasonBlockingDriveway" },
+        { code: "blocking_traffic", icon: "\u{1F6A6}", key: "reasonBlockingTraffic" },
+        { code: "double_parked", icon: "\u{1F697}", key: "reasonDoubleParked" },
+        { code: "illegal_parking", icon: "\u{1F6AB}", key: "reasonIllegalParking" },
+        { code: "private_property", icon: "\u{1F3E0}", key: "reasonPrivateProperty" },
+        { code: "other", icon: "\u{1F4AC}", key: "reasonOther" },
+        // Last, and on its own row, because it is the one that is never
+        // metered and the one nobody should hit by accident.
+        { code: "emergency", icon: "\u{1F198}", key: "reasonEmergency", emergency: true },
+      ];
+
+      /*
+       * The sentence the owner reads when the scanner adds no note of their
+       * own.
+       *
+       * This used to compose "A visitor has selected the reason: Blocking
+       * Driveway." — the shape of a form submission, not of a person asking
+       * for help, and it made the owner do the translation from a category
+       * name to a thing that is happening to their vehicle right now.
+       *
+       * Always English, whatever language the page is being read in: the body
+       * is passed through to the owner verbatim and this page cannot know
+       * which language *they* read. The owner's app localises the title from
+       * the code; this is the line underneath it.
+       */
+      const REASON_BODY = {
+        blocking_driveway: "bodyBlockingDriveway",
+        blocking_traffic: "bodyBlockingTraffic",
+        double_parked: "bodyDoubleParked",
+        illegal_parking: "bodyIllegalParking",
+        private_property: "bodyPrivateProperty",
+        emergency: "bodyEmergency",
+        other: "bodyOther",
+      };
+
+      /*
+       * The headline the owner's phone puts above it.
+       *
+       * A mirror of `TITLES` in `functions/index.js`, which is itself a mirror
+       * of `FCMService._titleFromReason`. It exists here for one reason: to
+       * show the person about to send exactly what they are about to set off.
+       *
+       * Nothing on the wire reads this map. The owner's own app renders the
+       * real title from the reason code, in the owner's language — so this is
+       * a faithful preview of the alert, not the alert.
+       */
+      const PREVIEW_TITLES = {
+        blocking_driveway: "previewTitleBlockingDriveway",
+        blocking_traffic: "previewTitleBlockingTraffic",
+        double_parked: "previewTitleDoubleParked",
+        illegal_parking: "previewTitleIllegalParking",
+        private_property: "previewTitlePrivateProperty",
+        emergency: "previewTitleEmergency",
+        other: "previewTitleOther",
+      };
+
+      /*
+       * One-tap notes.
+       *
+       * Two jobs. The first is speed: somebody holding a phone in one hand at
+       * a kerb will not type, so the note field stays empty and the owner gets
+       * a category where a sentence would have got them moving.
+       *
+       * The second is coverage. Comparable products offer a dozen situations —
+       * lights left on, alarm ringing, a flat tyre, a pet inside, a tow truck
+       * arriving. Our wire has seven codes and cannot grow one without the
+       * Flutter app shipping the matching string first. So the specific
+       * situation rides in the note, which the server passes through verbatim
+       * as the notification body: the code stays `other`, and the owner still
+       * reads "Your headlights are on" rather than "someone needs you".
+       *
+       * Tapping a chip a second time clears it, so a mis-tap costs one tap.
+       */
+      const NOTE_PRESETS = {
+        blocking_driveway: ["notePresetCantGetOut", "notePresetWaitingHere", "notePresetNoRush"],
+        blocking_traffic: ["notePresetHoldingUp", "notePresetPleaseHurry"],
+        double_parked: ["notePresetCantGetOut", "notePresetWaitingHere"],
+        illegal_parking: ["notePresetTowRisk", "notePresetNoRush"],
+        private_property: ["notePresetPrivateMove", "notePresetNoRush"],
+        other: [
+          "notePresetLightsOn",
+          "notePresetAlarm",
+          "notePresetFlatTyre",
+          "notePresetPetInside",
+          "notePresetWindowOpen",
+          "notePresetTowTruck",
+          "notePresetDamage",
+          "notePresetFallen",
+        ],
+        emergency: ["notePresetEmergencyHelp", "notePresetEmergencyCalled"],
+      };
+
+      /**
+       * ---------------------------------------------------------------
+       * Theme
+       * ---------------------------------------------------------------
+       *
+       * Three states, matching `ThemeController` in the app: an explicit
+       * light, an explicit dark, and `system` — which writes no attribute at
+       * all and leaves the media query in theme.css in charge.
+       *
+       * The initial value is read from the DOM rather than from storage,
+       * because the inline script in <head> has already applied it before
+       * this bundle was parsed. Reading it twice is how the two get to
+       * disagree.
+       */
+      function useTheme() {
+        const [theme, setThemeState] = useState(
+          () => document.documentElement.getAttribute("data-theme") || "system"
+        );
+
+        const setTheme = useCallback((next) => {
+          if (next === "system") {
+            document.documentElement.removeAttribute("data-theme");
+          } else {
+            document.documentElement.setAttribute("data-theme", next);
+          }
+          writeStored("avahanaa.theme", next);
+          setThemeState(next);
+        }, []);
+
+        // What the toggle would switch to, given what is actually on screen.
+        // With `system` selected that depends on the OS, not on our state.
+        const resolved = useMemo(() => {
+          if (theme === "light" || theme === "dark") return theme;
+          return window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        }, [theme]);
+
+        return { theme, resolved, setTheme };
+      }
+
+      /**
+       * Language, persisted, and reflected onto <html lang> so the Kannada
+       * font stack in theme.css applies and screen readers switch voice.
+       */
+      function useLanguage() {
+        const [lang, setLangState] = useState(() => {
+          const stored = readStored("avahanaa.lang", "");
+          if (stored === "en" || stored === "kn") return stored;
+          // A Kannada-preferring browser gets Kannada without being asked.
+          const nav = (navigator.language || "").toLowerCase();
+          return nav.startsWith("kn") ? "kn" : "en";
+        });
+
+        useEffect(() => {
+          document.documentElement.setAttribute("lang", lang);
+        }, [lang]);
+
+        const setLang = useCallback((next) => {
+          writeStored("avahanaa.lang", next);
+          setLangState(next);
+        }, []);
+
+        const t = useCallback((key) => translate(lang, key), [lang]);
+
+        return { lang, setLang, t };
+      }
+
+      /** Builds a same-site page link, preserving the `?page=` routing. */
+      function pageHref(page) {
+        return page ? `/index.html?page=${page}` : "/index.html";
+      }
+
+      /**
+       * Navbar
+       */
+      function Navbar({ page }) {
+        const { t, lang, setLang } = useT();
+        const { resolved, setTheme } = useTheme();
+        const [open, setOpen] = useState(false);
+        const [scrolled, setScrolled] = useState(false);
+
+        // The border under the bar appears only once the page has moved. On a
+        // hero that runs to the top edge, a line sitting on top of the metal
+        // from the first frame reads as a seam.
+        useEffect(() => {
+          const onScroll = () => setScrolled(window.scrollY > 4);
+          onScroll();
+          window.addEventListener("scroll", onScroll, { passive: true });
+          return () => window.removeEventListener("scroll", onScroll);
+        }, []);
+
+        // A menu that stays open after the viewport grows is a menu floating
+        // over content nobody asked to cover.
+        useEffect(() => {
+          const mq = window.matchMedia("(min-width: 992px)");
+          const onChange = () => { if (mq.matches) setOpen(false); };
+          mq.addEventListener("change", onChange);
+          return () => mq.removeEventListener("change", onChange);
+        }, []);
+
+        const links = [
+          { page: "", key: "navHome" },
+          { page: "features", key: "navFeatures" },
+          { page: "plans", key: "navPlans" },
+          { page: "notify", key: "navNotify" },
+          { page: "about", key: "navAbout" },
+          { page: "contact", key: "navContact" },
+        ];
+
+        const nextLang = lang === "en" ? "kn" : "en";
+        const nextLangLabel = LANGUAGES.find((l) => l.id === nextLang).label;
+
         return (
-          // Use a dark navy navbar for better contrast against light backgrounds
-          <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-            <div className="container">
-              <a className="navbar-brand" href="./">
-                <img src="./logo.jpg" alt="Avahanaa" width="40" className="me-2" />
-                Avahanaa
+          <nav className="av-nav" data-scrolled={scrolled ? "true" : "false"}>
+            <div className="container av-nav__inner">
+              <a className="av-brand" href="/index.html">
+                <img className="av-brand__mark" src="/logo.jpg" alt="" width="34" height="34" />
+                <span>Avahanaa</span>
               </a>
-              <button
-                className="navbar-toggler"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#navbarNav"
-                aria-controls="navbarNav"
-                aria-expanded="false"
-                aria-label="Toggle navigation"
+
+              <ul
+                className="av-nav__links"
+                id="av-nav-links"
+                data-open={open ? "true" : "false"}
               >
-                <span className="navbar-toggler-icon"></span>
-              </button>
-              <div className="collapse navbar-collapse" id="navbarNav">
-                <ul className="navbar-nav ms-auto">
-                  <li className="nav-item">
-                    <a className="nav-link" href="./index.html">Home</a>
+                {links.map((link) => (
+                  <li key={link.key}>
+                    <a
+                      className="av-nav__link"
+                      href={pageHref(link.page)}
+                      aria-current={(page || "") === link.page ? "page" : undefined}
+                    >
+                      {t(link.key)}
+                    </a>
                   </li>
-                  <li className="nav-item">
-                    <a className="nav-link" href="./index.html?page=about">About</a>
-                  </li>
-                  <li className="nav-item">
-                    <a className="nav-link" href="./index.html?page=notify">Notify</a>
-                  </li>
-                  <li className="nav-item">
-                    <a className="nav-link" href="./index.html?page=contact">Contact</a>
-                  </li>
-                  <li className="nav-item">
-                    <a className="nav-link" href="./privacy-policy.html">Privacy</a>
-                  </li>
-                  <li className="nav-item">
-                    <a className="nav-link" href="./terms-and-conditions.html">Terms</a>
-                  </li>
-                </ul>
+                ))}
+              </ul>
+
+              <div className="av-nav__tools">
+                <button
+                  type="button"
+                  className="av-icon-btn"
+                  onClick={() => setLang(nextLang)}
+                  aria-label={t("navLanguage")}
+                  title={t("navLanguage")}
+                >
+                  {nextLangLabel}
+                </button>
+                <button
+                  type="button"
+                  className="av-icon-btn"
+                  onClick={() => setTheme(resolved === "dark" ? "light" : "dark")}
+                  aria-label={resolved === "dark" ? t("navThemeLight") : t("navThemeDark")}
+                  title={resolved === "dark" ? t("navThemeLight") : t("navThemeDark")}
+                >
+                  <span aria-hidden="true">{resolved === "dark" ? "☀️" : "\u{1F319}"}</span>
+                </button>
+                <button
+                  type="button"
+                  className="av-nav__toggle"
+                  onClick={() => setOpen((value) => !value)}
+                  aria-expanded={open}
+                  aria-controls="av-nav-links"
+                  aria-label={t("navMenu")}
+                >
+                  <span aria-hidden="true">{open ? "✕" : "☰"}</span>
+                </button>
               </div>
             </div>
           </nav>
@@ -837,35 +1765,78 @@
       }
 
       /**
-       * Footer component
+       * Footer
        */
       function Footer() {
+        const { t } = useT();
         return (
-          <footer className="footer mt-5">
-            <div className="container text-center">
-              <div className="mb-2">
-                <img src="./logo.jpg" alt="Avahanaa logo" style={{ height: '32px', marginRight: '8px' }} />
+          <footer className="av-footer">
+            <div className="container">
+              <div className="av-footer__grid">
+                <div>
+                  <span className="av-footer__brand">
+                    <img src="/logo.jpg" alt="" width="32" height="32" />
+                    Avahanaa
+                  </span>
+                  <p className="av-footer__blurb">{t("footerBlurb")}</p>
+                </div>
+                <div>
+                  <p className="av-footer__head">{t("footerProduct")}</p>
+                  <ul className="av-footer__links">
+                    <li><a href={pageHref("features")}>{t("navFeatures")}</a></li>
+                    <li><a href={pageHref("plans")}>{t("navPlans")}</a></li>
+                    <li><a href={pageHref("notify")}>{t("navNotify")}</a></li>
+                    <li><a href={pageHref("about")}>{t("navAbout")}</a></li>
+                    <li><a href={pageHref("contact")}>{t("navContact")}</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="av-footer__head">{t("footerLegal")}</p>
+                  <ul className="av-footer__links">
+                    <li><a href="/privacy-policy.html">{t("navPrivacy")}</a></li>
+                    <li><a href="/terms-and-conditions.html">{t("navTerms")}</a></li>
+                    <li><a href="/account-deletion.html">{t("footerDeleteAccount")}</a></li>
+                  </ul>
+                </div>
               </div>
-              <p className="mb-1">
-                &copy; 2025 Avahanaa. All rights reserved.
-              </p>
-              <p className="mb-0 small">
-                Powered by Firebase &amp; React. Designed with Bootswatch Flatly.
-              </p>
-              <p className="mb-0 mt-2 small">
-                <a className="link-light" href="./privacy-policy.html">Privacy Policy</a>
-                <span className="mx-2">|</span>
-                <a className="link-light" href="./terms-and-conditions.html">Terms &amp; Conditions</a>
-              </p>
+              <div className="av-footer__base">
+                <span>{t("footerRights")}</span>
+                <span>{t("footerBuilt")}</span>
+              </div>
             </div>
           </footer>
         );
       }
 
+      /** A section heading — eyebrow, title, and an optional line of copy. */
+      function SectionHead({ eyebrow, title, lead, center }) {
+        return (
+          <div className={`av-section-head${center ? " av-section-head--center" : ""}`}>
+            {eyebrow && <p className="av-eyebrow">{eyebrow}</p>}
+            <h2>{title}</h2>
+            {lead && <p>{lead}</p>}
+          </div>
+        );
+      }
+
+      /** A feature card: tinted icon tile, title, one line of copy. */
+      function FeatureCard({ icon, title, body, tone }) {
+        return (
+          <div className="av-card av-card--interactive av-feature av-rise">
+            <span className={`av-feature__icon${tone ? ` av-feature__icon--${tone}` : ""}`} aria-hidden="true">
+              {icon}
+            </span>
+            <h4>{title}</h4>
+            <p>{body}</p>
+          </div>
+        );
+      }
+
       /**
-      * Home page
-      */
+       * Home page
+       */
       function HomePage() {
+        const { t } = useT();
         const [scanning, setScanning] = useState(false);
         const [cameraDevices, setCameraDevices] = useState([]);
         const [selectedCameraId, setSelectedCameraId] = useState("");
@@ -998,7 +1969,7 @@
             }
 
             params.set("page", "notify");
-            const targetHref = `./index.html${
+            const targetHref = `/index.html${
               params.toString() ? `?${params.toString()}` : ""
             }`;
 
@@ -1119,45 +2090,55 @@
 
         return (
           <div>
-            <section className="hero">
+            <section className="av-hero av-hero--home">
               <div className="container">
-                <h1>Instantly Notify Vehicle Owners</h1>
-                <p>
-                  Avahanaa lets you discreetly contact vehicle owners by scanning a
-                  QR code. Help keep our cities safe and congestion‑free.
-                </p>
-                {!scanning && (
-                  <button
-                    type="button"
-                    className="btn btn-lg btn-primary mt-3"
-                    onClick={() => startScan()}
-                    disabled={initialisingCamera}
-                  >
-                    {initialisingCamera ? "Starting…" : "Scan QR"}
-                  </button>
-                )}
-                {!scanning && cameraError && (
-                  <div className="alert alert-warning mt-3" role="alert">
-                    {cameraError}
-                  </div>
-                )}
+                <div className="av-hero__inner">
+                  <span className="av-hero__eyebrow">{t("homeEyebrow")}</span>
+                  <h1 className="av-hero__title">{t("homeTitle")}</h1>
+                  <p className="av-hero__lead">{t("homeLead")}</p>
+                  {!scanning && (
+                    <div className="av-hero__actions">
+                      <button
+                        type="button"
+                        className="av-btn av-btn--primary av-btn--lg"
+                        onClick={() => startScan()}
+                        disabled={initialisingCamera}
+                      >
+                        <span aria-hidden="true">{"\u{1F4F7}"}</span>
+                        {initialisingCamera ? t("homeScanning") : t("homeScan")}
+                      </button>
+                      <a
+                        className="av-btn av-btn--on-metal av-btn--lg"
+                        href={pageHref("notify")}
+                      >
+                        {t("homeEnterPlate")}
+                      </a>
+                    </div>
+                  )}
+                  <p className="av-hero__note">{t("homeHeroNote")}</p>
+                  {!scanning && cameraError && (
+                    <div className="av-notice av-notice--warning mt-3" role="alert">
+                      <span className="av-notice__icon" aria-hidden="true">{"⚠️"}</span>
+                      <p>{cameraError}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </section>
+
             {scanning && (
-              <section className="py-5 bg-light">
-                <div className="container text-center">
-                  <h2 className="mb-3">Scan the QR Code</h2>
-                  <p className="text-muted small mb-4">
-                    When prompted, allow camera access so we can read the Avahanaa QR code.
-                  </p>
+              <section className="av-section av-section--tight av-section--muted">
+                <div className="container container--narrow text-center">
+                  <h2 className="mb-2">{t("homeScanHeading")}</h2>
+                  <p className="text-tertiary small mb-4">{t("homeScanHelp")}</p>
                   {cameraDevices.length > 1 && (
-                    <div className="mb-3">
-                      <label className="form-label" htmlFor="cameraSelect">
-                        Choose camera
+                    <div className="mb-3" style={{ maxWidth: "340px", margin: "0 auto var(--space-lg)" }}>
+                      <label className="av-label" htmlFor="cameraSelect">
+                        {t("homeChooseCamera")}
                       </label>
                       <select
                         id="cameraSelect"
-                        className="form-select text-start"
+                        className="av-select"
                         value={selectedCameraId}
                         onChange={handleCameraChange}
                         disabled={initialisingCamera}
@@ -1170,89 +2151,357 @@
                       </select>
                     </div>
                   )}
-                  <div
-                    id="qr-reader"
-                    style={{ width: "300px", margin: "0 auto" }}
-                  ></div>
+                  <div id="qr-reader" className="av-scanner"></div>
                   {initialisingCamera && (
-                    <p className="text-muted small mt-3">
-                      Preparing camera… please allow access if prompted.
-                    </p>
+                    <p className="text-tertiary small mt-3">{t("homeCameraPreparing")}</p>
                   )}
                   {cameraError && (
-                    <div className="alert alert-warning mt-3" role="alert">
-                      {cameraError}
+                    <div className="av-notice av-notice--warning mt-3" role="alert">
+                      <span className="av-notice__icon" aria-hidden="true">{"⚠️"}</span>
+                      <p>{cameraError}</p>
                     </div>
                   )}
-                  <div className="d-flex flex-column flex-md-row justify-content-center gap-2 mt-3">
+                  <div className="av-row mt-4" style={{ justifyContent: "center" }}>
                     {cameraError && (
                       <button
                         type="button"
-                        className="btn btn-primary"
+                        className="av-btn av-btn--primary"
                         onClick={() => startScan(selectedCameraId)}
                         disabled={initialisingCamera}
                       >
-                        Try again
+                        {t("homeTryAgain")}
                       </button>
                     )}
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="av-btn av-btn--secondary"
                       onClick={() => stopScan()}
                       disabled={initialisingCamera}
                     >
-                      Cancel
+                      {t("homeCancel")}
                     </button>
                   </div>
                 </div>
               </section>
             )}
-            <section className="py-5">
-              <div className="container text-center">
-                <h2 className="mb-4">How It Works</h2>
-                <div className="row g-4 how-it-works">
-                  <div className="col-md-4">
-                    <div className="card shadow-sm h-100 border-0">
-                      <div className="card-body">
-                        <div className="step-icon mb-3">
-                          <i className="bi bi-phone" />
-                        </div>
-                        <h5 className="card-title">Generate QR</h5>
-                        <p className="card-text">
-                          Vehicle owners create an account in the app and get their unique
-                          QR code.
-                        </p>
-                      </div>
+
+            <section className="av-section">
+              <div className="container">
+                <SectionHead
+                  center
+                  eyebrow={t("homeHowEyebrow")}
+                  title={t("homeHowTitle")}
+                />
+                <div className="av-grid av-grid--3">
+                  <div className="av-card av-step av-rise">
+                    <span className="av-step__n" aria-hidden="true">1</span>
+                    <h4>{t("homeStep1Title")}</h4>
+                    <p>{t("homeStep1Body")}</p>
+                  </div>
+                  <div className="av-card av-step av-rise">
+                    <span className="av-step__n" aria-hidden="true">2</span>
+                    <h4>{t("homeStep2Title")}</h4>
+                    <p>{t("homeStep2Body")}</p>
+                  </div>
+                  <div className="av-card av-step av-rise">
+                    <span className="av-step__n" aria-hidden="true">3</span>
+                    <h4>{t("homeStep3Title")}</h4>
+                    <p>{t("homeStep3Body")}</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="av-section av-section--muted">
+              <div className="container">
+                <SectionHead
+                  title={t("homeFeaturesTitle")}
+                  lead={t("homeFeaturesLead")}
+                />
+                <div className="av-grid av-grid--3">
+                  <FeatureCard icon={"\u{1F514}"} tone="alert" title={t("featAlarmTitle")} body={t("featAlarmBody")} />
+                  <FeatureCard icon={"\u{1F4AC}"} tone="success" title={t("featReplyTitle")} body={t("featReplyBody")} />
+                  <FeatureCard icon={"⏱️"} title={t("featCountdownTitle")} body={t("featCountdownBody")} />
+                  <FeatureCard icon={"\u{1F4CD}"} title={t("featLocationTitle")} body={t("featLocationBody")} />
+                  <FeatureCard icon={"\u{1F319}"} tone="warning" title={t("featQuietHoursTitle")} body={t("featQuietHoursBody")} />
+                  <FeatureCard icon={"\u{1F310}"} title={t("featLanguageTitle")} body={t("featLanguageBody")} />
+                </div>
+                <div className="mt-4">
+                  <a className="av-btn av-btn--secondary" href={pageHref("features")}>
+                    {t("homeSeeAll")}
+                  </a>
+                </div>
+              </div>
+            </section>
+
+            <section className="av-section">
+              <div className="container container--narrow text-center">
+                <p className="av-eyebrow">{t("homePromiseEyebrow")}</p>
+                <h2>{t("homePromiseTitle")}</h2>
+                <p className="lead">{t("homePromiseBody")}</p>
+              </div>
+            </section>
+
+            <section className="av-section av-section--tight">
+              <div className="container">
+                <div className="av-card av-card--lg av-card--info">
+                  <div className="av-split" style={{ alignItems: "center" }}>
+                    <div>
+                      <h2 className="mb-2">{t("homeCtaTitle")}</h2>
+                      <p className="mb-0">{t("homeCtaBody")}</p>
+                    </div>
+                    <div className="av-row">
+                      <a className="av-btn av-btn--primary" href={pageHref("plans")}>
+                        {t("homeCtaPlans")}
+                      </a>
+                      <a className="av-btn av-btn--ghost" href={pageHref("notify")}>
+                        {t("homeCtaNotify")}
+                      </a>
                     </div>
                   </div>
-                  <div className="col-md-4">
-                    <div className="card shadow-sm h-100 border-0">
-                      <div className="card-body">
-                        <div className="step-icon mb-3">
-                          <i className="bi bi-qr-code-scan" />
-                        </div>
-                        <h5 className="card-title">Scan &amp; Send</h5>
-                        <p className="card-text">
-                          Others scan the QR to contact the owner and choose a reason
-                          like emergency or blocked driveway.
-                        </p>
-                      </div>
-                    </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        );
+      }
+
+      /**
+       * Features page — the whole product, on both sides of the windscreen.
+       */
+      function FeaturesPage() {
+        const { t } = useT();
+        const neverShared = [
+          "privNeverPhone",
+          "privNeverEmail",
+          "privNeverName",
+          "privNeverScanner",
+          "privNeverExact",
+        ];
+
+        return (
+          <div>
+            <section className="av-hero av-hero--page">
+              <div className="container">
+                <div className="av-hero__inner">
+                  <h1 className="av-hero__title">{t("featTitle")}</h1>
+                  <p className="av-hero__lead">{t("featLead")}</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="av-section">
+              <div className="container">
+                <SectionHead eyebrow={t("navFeatures")} title={t("featScannerHeading")} />
+                <div className="av-grid av-grid--3">
+                  <FeatureCard icon={"\u{1F4F1}"} title={t("featNoAppTitle")} body={t("featNoAppBody")} />
+                  <FeatureCard icon={"\u{1F3AF}"} title={t("featReasonsTitle")} body={t("featReasonsBody")} />
+                  <FeatureCard icon={"\u{1F524}"} title={t("featPlateTitle")} body={t("featPlateBody")} />
+                  <FeatureCard icon={"\u{1F4AC}"} tone="success" title={t("featReplyTitle")} body={t("featReplyBody")} />
+                  <FeatureCard icon={"⏱️"} title={t("featCountdownTitle")} body={t("featCountdownBody")} />
+                  <FeatureCard icon={"\u{1F4CD}"} title={t("featLocationTitle")} body={t("featLocationBody")} />
+                </div>
+              </div>
+            </section>
+
+            <section className="av-section av-section--muted">
+              <div className="container">
+                <SectionHead eyebrow={t("navFeatures")} title={t("featOwnerHeading")} />
+                <div className="av-grid av-grid--3">
+                  <FeatureCard icon={"\u{1F514}"} tone="alert" title={t("featAlarmTitle")} body={t("featAlarmBody")} />
+                  <FeatureCard icon={"\u{1F503}"} tone="alert" title={t("featRemindersTitle")} body={t("featRemindersBody")} />
+                  <FeatureCard icon={"\u{1F44D}"} tone="success" title={t("featRepliesOwnerTitle")} body={t("featRepliesOwnerBody")} />
+                  <FeatureCard icon={"\u{1F697}"} title={t("featMultiVehicleTitle")} body={t("featMultiVehicleBody")} />
+                  <FeatureCard icon={"\u{1F319}"} tone="warning" title={t("featQuietHoursTitle")} body={t("featQuietHoursBody")} />
+                  <FeatureCard icon={"\u{1F5A8}️"} title={t("featStickerTitle")} body={t("featStickerBody")} />
+                  <FeatureCard icon={"\u{1F4CA}"} title={t("featInsightsTitle")} body={t("featInsightsBody")} />
+                  <FeatureCard icon={"\u{1F310}"} title={t("featLanguageTitle")} body={t("featLanguageBody")} />
+                </div>
+              </div>
+            </section>
+
+            <section className="av-section">
+              <div className="container container--narrow">
+                <SectionHead center title={t("featPrivacyHeading")} />
+                <div className="av-card av-card--lg">
+                  <ul className="av-shield-list">
+                    {neverShared.map((key) => (
+                      <li key={key}>{t(key)}</li>
+                    ))}
+                  </ul>
+                  <hr />
+                  <p className="mb-0">{t("privNeverNote")}</p>
+                </div>
+              </div>
+            </section>
+          </div>
+        );
+      }
+
+      /**
+       * Plans page — the alert meter, as `docs/monetization.md` describes it.
+       *
+       * The three rules below the cards are not marketing copy. They are the
+       * reason a meter in front of a safety notification is defensible at all,
+       * and each is enforced on the server rather than in the app.
+       */
+      function PlansPage() {
+        const { t } = useT();
+        return (
+          <div>
+            <section className="av-hero av-hero--page">
+              <div className="container">
+                <div className="av-hero__inner">
+                  <h1 className="av-hero__title">{t("plansTitle")}</h1>
+                  <p className="av-hero__lead">{t("plansLead")}</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="av-section">
+              <div className="container">
+                <div className="av-grid av-grid--3">
+                  <div className="av-card av-plan av-rise">
+                    <p className="av-plan__name">{t("plansFreeName")}</p>
+                    <p className="av-plan__price">
+                      {t("plansFreePrice")}{" "}
+                      <span className="av-plan__period">{t("plansFreePeriod")}</span>
+                    </p>
+                    <ul className="av-plan__list">
+                      <li>{t("plansFreeItem1")}</li>
+                      <li>{t("plansFreeItem2")}</li>
+                      <li>{t("plansFreeItem3")}</li>
+                      <li>{t("plansFreeItem4")}</li>
+                    </ul>
                   </div>
-                  <div className="col-md-4">
-                    <div className="card shadow-sm h-100 border-0">
-                      <div className="card-body">
-                        <div className="step-icon mb-3">
-                          <i className="bi bi-bell-fill" />
-                        </div>
-                        <h5 className="card-title">Notify Owner</h5>
-                        <p className="card-text">
-                          Owners receive an instant push notification on the app and can
-                          respond accordingly.
-                        </p>
-                      </div>
-                    </div>
+
+                  <div className="av-card av-plan av-rise">
+                    <p className="av-plan__name">{t("plansAdName")}</p>
+                    <p className="av-plan__price">
+                      {t("plansAdPrice")}{" "}
+                      <span className="av-plan__period">{t("plansAdPeriod")}</span>
+                    </p>
+                    <ul className="av-plan__list">
+                      <li>{t("plansAdItem1")}</li>
+                      <li>{t("plansAdItem2")}</li>
+                      <li>{t("plansAdItem3")}</li>
+                    </ul>
                   </div>
+
+                  <div className="av-card av-plan av-plan--featured av-rise">
+                    <span className="av-chip av-chip--primary mb-2">Plus</span>
+                    <p className="av-plan__name">{t("plansPlusName")}</p>
+                    <p className="av-plan__price">
+                      {t("plansPlusPrice")}{" "}
+                      <span className="av-plan__period">{t("plansPlusPeriod")}</span>
+                    </p>
+                    <ul className="av-plan__list">
+                      <li>{t("plansPlusItem1")}</li>
+                      <li>{t("plansPlusItem2")}</li>
+                      <li>{t("plansPlusItem3")}</li>
+                      <li>{t("plansPlusItem4")}</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="av-notice mt-4">
+                  <span className="av-notice__icon" aria-hidden="true">{"ℹ️"}</span>
+                  <p>{t("plansPriceNote")}</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="av-section av-section--muted">
+              <div className="container">
+                <div className="av-grid av-grid--3">
+                  <FeatureCard
+                    icon={"\u{1F198}"}
+                    tone="alert"
+                    title={t("plansRuleEmergencyTitle")}
+                    body={t("plansRuleEmergencyBody")}
+                  />
+                  <FeatureCard
+                    icon={"\u{1F507}"}
+                    tone="warning"
+                    title={t("plansRuleQuietTitle")}
+                    body={t("plansRuleQuietBody")}
+                  />
+                  <FeatureCard
+                    icon={"\u{1F576}️"}
+                    tone="success"
+                    title={t("plansRuleScannerTitle")}
+                    body={t("plansRuleScannerBody")}
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="av-section">
+              <div className="container container--narrow">
+                <div className="av-card av-card--lg">
+                  <h2>{t("plansQuietHoursTitle")}</h2>
+                  <p className="mb-0">{t("plansQuietHoursBody")}</p>
+                </div>
+              </div>
+            </section>
+          </div>
+        );
+      }
+
+      /**
+       * About page – explains the project and contact info
+       */
+      function AboutPage() {
+        const { t } = useT();
+        return (
+          <div>
+            <section className="av-hero av-hero--page">
+              <div className="container">
+                <div className="av-hero__inner">
+                  <h1 className="av-hero__title">{t("aboutTitle")}</h1>
+                  <p className="av-hero__lead">
+                    Avahanaa bridges the communication gap between vehicle owners and
+                    their community. Our platform marries QR codes with push
+                    notifications to deliver quick, private alerts without exposing
+                    personal information.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section className="av-section">
+              <div className="container container--reading av-prose">
+                <p>
+                  Vehicle owners create an account in the Avahanaa mobile app, register
+                  their vehicle details and receive a unique QR code. They print and
+                  place this code on the car’s windscreen. When someone needs to
+                  reach them—whether the car is blocking a driveway, the headlights
+                  were left on or there’s an emergency inside—any passer‑by can
+                  scan the code or enter the vehicle number on this site and send a
+                  discreet notification. Owners are instantly alerted via the app
+                  and can take appropriate action.
+                </p>
+                <p>
+                  Our mission is to reduce congestion, enhance safety and protect
+                  privacy by providing a frictionless way to alert vehicle owners.
+                  Avahanaa is built with modern web technologies including React,
+                  Firebase Cloud Messaging and Cloud Functions, and the alert itself
+                  is resolved entirely on the server — this page never learns who the
+                  owner is.
+                </p>
+                <h2 className="section-title">Reach out</h2>
+                <p>
+                  Have questions or feedback? We’d love to hear from you.
+                  Send us an email at{" "}
+                  <a href="mailto:souvikbanerjee73@gmail.com">souvikbanerjee73@gmail.com</a>.
+                </p>
+                <div className="av-row mt-4">
+                  <a className="av-btn av-btn--primary" href={pageHref("features")}>
+                    {t("navFeatures")}
+                  </a>
+                  <a className="av-btn av-btn--secondary" href={pageHref("contact")}>
+                    {t("navContact")}
+                  </a>
                 </div>
               </div>
             </section>
@@ -1264,20 +2513,21 @@
        * Contact page
        */
       function ContactPage() {
+        const { t } = useT();
         const [submitted, setSubmitted] = useState(false);
         const [sending, setSending] = useState(false);
         const [error, setError] = useState("");
         const [form, setForm] = useState({ name: "", email: "", message: "" });
+
         function handleChange(e) {
           setForm({ ...form, [e.target.name]: e.target.value });
         }
+
         async function handleSubmit(e) {
           e.preventDefault();
           setError("");
           if (!db) {
-            setError(
-              "Contact form is unavailable because Firebase is not configured."
-            );
+            setError(t("contactUnavailable"));
             return;
           }
           setSending(true);
@@ -1297,127 +2547,504 @@
           }
           setSending(false);
         }
+
         return (
-          <div className="container py-5">
-            <h2>Contact Us</h2>
-            <p className="mb-4">
-              We’d love to hear from you! Share your questions, feedback or a review
-              of your experience with Avahanaa. Your comments will be sent directly
-              to our team at <strong>souvikbanerjee73@gmail.com</strong>. Your input helps us
-              improve and better serve our community.
+          <div>
+            <section className="av-hero av-hero--page">
+              <div className="container">
+                <div className="av-hero__inner">
+                  <h1 className="av-hero__title">{t("contactTitle")}</h1>
+                  <p className="av-hero__lead">
+                    We’d love to hear from you! Share your questions, feedback or a
+                    review of your experience with Avahanaa. Your comments will be sent
+                    directly to our team at <strong style={{ color: "#fff" }}>souvikbanerjee73@gmail.com</strong>.
+                    Your input helps us improve and better serve our community.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section className="av-section">
+              <div className="container av-split av-split--sticky">
+                <div>
+                  {error && (
+                    <div className="av-notice av-notice--danger mb-4" role="alert">
+                      <span className="av-notice__icon" aria-hidden="true">{"⚠️"}</span>
+                      <p>{error}</p>
+                    </div>
+                  )}
+                  {!submitted ? (
+                    <form onSubmit={handleSubmit} className="av-card av-card--lg av-stack">
+                      <div className="av-grid av-grid--2" style={{ gap: "var(--space-lg)" }}>
+                        <div className="av-field">
+                          <label className="av-label" htmlFor="contact-name">{t("contactName")}</label>
+                          <input
+                            id="contact-name"
+                            type="text"
+                            className="av-input"
+                            name="name"
+                            value={form.name}
+                            onChange={handleChange}
+                            required
+                          />
+                        </div>
+                        <div className="av-field">
+                          <label className="av-label" htmlFor="contact-email">{t("contactEmail")}</label>
+                          <input
+                            id="contact-email"
+                            type="email"
+                            className="av-input"
+                            name="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="av-field">
+                        <label className="av-label" htmlFor="contact-message">{t("contactMessage")}</label>
+                        <textarea
+                          id="contact-message"
+                          className="av-textarea"
+                          name="message"
+                          rows="5"
+                          value={form.message}
+                          onChange={handleChange}
+                          required
+                        ></textarea>
+                      </div>
+                      <div>
+                        <button type="submit" className="av-btn av-btn--primary" disabled={sending}>
+                          {sending ? t("contactSending") : t("contactSend")}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="av-notice av-notice--success" role="status">
+                      <span className="av-notice__icon" aria-hidden="true">{"✅"}</span>
+                      <p>{t("contactThanks")}</p>
+                    </div>
+                  )}
+                </div>
+
+                <aside className="av-stack">
+                  <div className="av-card">
+                    <h4 className="av-card__title">{t("contactOffice")}</h4>
+                    <p className="mb-2">
+                      123 Main Street
+                      <br />Hābra, West Bengal 700109
+                      <br />India
+                    </p>
+                    <p className="mb-2">
+                      Email:{" "}
+                      <a href="mailto:souvikbanerjee73@gmail.com">souvikbanerjee73@gmail.com</a>
+                    </p>
+                    <p className="mb-0">Phone: +91 98765 43210</p>
+                  </div>
+                  <div className="av-card av-card--info">
+                    <h4 className="av-card__title">{t("contactCompany")}</h4>
+                    <p className="mb-0">
+                      Avahanaa is committed to making urban mobility smoother and
+                      safer. Join us in our mission to reduce congestion and
+                      provide peace of mind for vehicle owners.
+                    </p>
+                  </div>
+                </aside>
+              </div>
+            </section>
+          </div>
+        );
+      }
+
+      /** The owner's reply, in the reader's language. */
+      const REPLY_KEYS = {
+        omw_now: "replyOmwNow",
+        omw_5: "replyOmw5",
+        omw_15: "replyOmw15",
+        cannot_come: "replyCannotCome",
+        seen: "replySeen",
+      };
+
+      /**
+       * The vehicle, as the sticker already describes it.
+       *
+       * A colour, a model and a plate — the three things visible through the
+       * windscreen anyway. Showing them back is not decoration: it is how the
+       * person scanning confirms they are alerting the car in front of them
+       * and not a stale tab from yesterday.
+       */
+      /**
+       * ---------------------------------------------------------------
+       * Scan-path helpers
+       * ---------------------------------------------------------------
+       *
+       * Small, and all three exist for the same reason: the person using this
+       * screen is standing outdoors holding a phone in one hand, not sitting
+       * at a desk.
+       */
+
+      /**
+       * A short tap on the phone's motor.
+       *
+       * Picking a reason and receiving an answer are the two moments worth
+       * confirming through the hand rather than only through the eye — this
+       * page is often being read in sunlight, at arm's length, in a hurry.
+       * Absent on desktop and on iOS Safari; nothing below depends on it.
+       */
+      function haptic(pattern) {
+        try {
+          if (navigator.vibrate) navigator.vibrate(pattern);
+        } catch (e) {
+          /* Refused by a permissions policy. Not worth a line in the console. */
+        }
+      }
+
+      /**
+       * Holds the screen awake.
+       *
+       * Only while an alert is out and unanswered. The whole promise of the
+       * reply channel is that the answer appears without being asked for —
+       * and a phone that dims and locks 30 seconds after the alert is sent
+       * breaks that for the exact person it was built for. Released the moment
+       * the reply lands, and re-acquired if the tab is backgrounded and
+       * returned to, because the browser drops the lock on visibility change.
+       */
+      function useWakeLock(active) {
+        useEffect(() => {
+          if (!active || !navigator.wakeLock) return undefined;
+
+          let sentinel = null;
+          let released = false;
+
+          const acquire = async () => {
+            if (released || document.visibilityState !== "visible") return;
+            try {
+              sentinel = await navigator.wakeLock.request("screen");
+            } catch (e) {
+              // Low battery, or the browser simply declined. The page still
+              // works; the screen just sleeps like any other.
+            }
+          };
+
+          acquire();
+          document.addEventListener("visibilitychange", acquire);
+          return () => {
+            released = true;
+            document.removeEventListener("visibilitychange", acquire);
+            if (sentinel) sentinel.release().catch(() => {});
+          };
+        }, [active]);
+      }
+
+      /** Seconds since `startedAt`, ticking, or null when inactive. */
+      function useElapsed(startedAt) {
+        const [seconds, setSeconds] = useState(0);
+        useEffect(() => {
+          if (!startedAt) {
+            setSeconds(0);
+            return undefined;
+          }
+          const tick = () =>
+            setSeconds(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
+          tick();
+          const id = setInterval(tick, 1000);
+          return () => clearInterval(id);
+        }, [startedAt]);
+        return startedAt ? seconds : null;
+      }
+
+      /** m:ss. Tabular numerals in the CSS keep it from jittering. */
+      function formatClock(totalSeconds) {
+        const s = Math.max(0, Math.round(totalSeconds));
+        return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+      }
+
+      /**
+       * The vehicle you scanned.
+       *
+       * Framed as a question rather than as a label. In a row of twenty bikes
+       * parked nose-to-tail outside a market, scanning the sticker one along
+       * from the one that is actually in your way is not an unusual mistake —
+       * and the only moment it can be caught for free is before the alert goes
+       * out, not after a stranger's phone has already gone off.
+       */
+      function VehicleCard({ plate, carModel, color, identifier, status }) {
+        const { t } = useT();
+        // The owner's app stores `color` as whichever the owner gave it: a
+        // word, or a CSS value picked from a swatch. A word belongs in the
+        // description; "#1f2933" is not something anybody standing at a bike
+        // can compare against the bike, so it is only ever the swatch.
+        const raw = typeof color === "string" ? color.trim() : "";
+        const colorIsValue = /^(#|rgba?\(|hsla?\()/i.test(raw);
+        const colorWord = raw && !colorIsValue ? raw : "";
+        const descriptors = [colorWord, carModel].filter(Boolean).join(" · ");
+        // Only paint a swatch that will actually paint. Real owners type
+        // "Matte Grey" and "Pearl White", which are not CSS colours — the
+        // swatch fell back to its own background and rendered as an empty box
+        // sitting next to the words, reading as a broken image rather than as
+        // the vehicle's colour. A handful of them *are* CSS named colours
+        // ("silver", "black"), so this asks the browser rather than guessing.
+        const swatch =
+          raw &&
+          typeof CSS !== "undefined" &&
+          CSS.supports &&
+          CSS.supports("color", raw)
+            ? raw
+            : "";
+
+        return (
+          <div className="av-vehicle">
+            <p className="av-eyebrow mb-0">
+              {plate ? t("notifyVehicle") : t("notifyIdentifier")}
             </p>
-            {error && (
-              <div className="alert alert-danger" role="alert">
-                {error}
-              </div>
-            )}
-            {!submitted ? (
-              <form onSubmit={handleSubmit} className="row g-3 mb-4">
-                <div className="col-md-6">
-                  <label className="form-label">Name</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="name"
-                    value={form.name}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label">Email</label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="col-12">
-                  <label className="form-label">Your message or review</label>
-                  <textarea
-                    className="form-control"
-                    name="message"
-                    rows="5"
-                    value={form.message}
-                    onChange={handleChange}
-                    required
-                  ></textarea>
-                </div>
-                <div className="col-12">
-                  <button type="submit" className="btn btn-primary" disabled={sending}>
-                    {sending ? "Sending…" : "Send Message"}
-                  </button>
-                </div>
-              </form>
+
+            {plate ? (
+              <span className="av-plate av-plate--hero">{plate}</span>
             ) : (
-              <div className="alert alert-success" role="alert">
-                Thank you for your message! We appreciate your feedback and will get back to you shortly.
-              </div>
+              <strong className="av-vehicle__code">{identifier}</strong>
             )}
-            <div className="row">
-              <div className="col-md-6">
-                <h5>Our Office</h5>
-                <p>
-                  123 Main Street
-                  <br />Hābra, West Bengal 700109
-                  <br />India
-                </p>
-                <p>
-                  Email: <a href="mailto:souvikbanerjee73@gmail.com">souvikbanerjee73@gmail.com</a>
-                </p>
-                <p>Phone: +91 98765 43210</p>
-              </div>
-              <div className="col-md-6">
-                <h5>Company Info</h5>
-                <p>
-                  Avahanaa is committed to making urban mobility smoother and
-                  safer. Join us in our mission to reduce congestion and
-                  provide peace of mind for vehicle owners.
-                </p>
-              </div>
+
+            {(swatch || descriptors) && (
+              <p className="av-vehicle__desc mb-0">
+                {swatch && (
+                  <span
+                    className="av-swatch"
+                    style={{ background: swatch }}
+                    title={raw}
+                    aria-hidden="true"
+                  ></span>
+                )}
+                {descriptors && <span>{descriptors}</span>}
+              </p>
+            )}
+
+            <p
+              className={`av-vehicle__status av-vehicle__status--${
+                status === "active" ? "ok" : "pending"
+              } mb-0`}
+            >
+              <span aria-hidden="true">{status === "active" ? "✓" : "···"}</span>
+              {status === "active"
+                ? t("notifyStickerActive")
+                : t("notifyStickerUnknown")}
+            </p>
+
+            <details className="av-vehicle__wrong">
+              <summary>{t("notifyWrongVehicle")}</summary>
+              <p className="small mb-0">{t("notifyWrongVehicleHelp")}</p>
+            </details>
+          </div>
+        );
+      }
+
+      /**
+       * The seven reasons.
+       *
+       * Emergency spans the full width on its own row — not for emphasis, but
+       * because it is the one that is never metered and the one nobody should
+       * reach for by accident while thumbing through a two-column grid.
+       */
+      function ReasonGrid({ reason, onPick }) {
+        const { t } = useT();
+        return (
+          <div className="av-reasons">
+            {REASON_OPTIONS.map((option) => (
+              <button
+                key={option.code}
+                type="button"
+                className={`av-reason${
+                  option.emergency ? " av-reason--emergency" : ""
+                }`}
+                aria-pressed={reason === option.code}
+                onClick={() => {
+                  haptic(option.emergency ? [12, 40, 12] : 10);
+                  onPick(option.code);
+                }}
+              >
+                <span className="av-reason__icon" aria-hidden="true">
+                  {option.icon}
+                </span>
+                <span className="av-reason__text">
+                  <span className="av-reason__label">{t(option.key)}</span>
+                  <span className="av-reason__hint">{t(`${option.key}Hint`)}</span>
+                </span>
+                <span className="av-reason__tick" aria-hidden="true">✓</span>
+              </button>
+            ))}
+          </div>
+        );
+      }
+
+      /**
+       * One-tap notes for the chosen reason.
+       *
+       * What they say is what is sent — the chip is not a code that expands
+       * into something else on the wire, because the preview directly below
+       * shows the note and a preview that quietly differs from the alert is
+       * worse than no preview at all.
+       */
+      function NotePresets({ reason, message, onPick }) {
+        const { t } = useT();
+        const presets = NOTE_PRESETS[reason] || [];
+        if (!presets.length) return null;
+
+        return (
+          <div className="av-presets">
+            <span className="av-presets__label">{t("notifyNotePresetsLabel")}</span>
+            <div className="av-presets__row">
+              {presets.map((key) => {
+                const text = t(key);
+                const active = message.trim() === text;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className="av-preset"
+                    aria-pressed={active}
+                    onClick={() => {
+                      haptic(8);
+                      // Tapping the active chip clears it, so a mis-tap costs
+                      // one tap rather than a trip to the keyboard to delete a
+                      // sentence somebody did not mean to send.
+                      onPick(active ? "" : text);
+                    }}
+                  >
+                    {text}
+                  </button>
+                );
+              })}
             </div>
           </div>
         );
       }
 
       /**
-       * About page – explains the project and contact info
+       * What they'll see.
+       *
+       * The last thing standing between somebody and the send button is not
+       * knowing how loud this is about to be on a stranger's phone. Every
+       * comparable product asks people to set off an alarm blind; showing the
+       * actual notification — the real title from the reason code, the real
+       * body, updating as they type — is what turns "is this rude?" into a
+       * decision they can make.
+       *
+       * The strings are the ones that will be sent. Nothing here is a
+       * paraphrase.
        */
-      function AboutPage() {
+      function AlertPreview({ reason, message, shareContact, contact }) {
+        const { t } = useT();
+
+        if (!reason) {
+          return (
+            <div className="av-preview av-preview--empty">
+              <p className="av-preview__label mb-0">{t("notifyPreviewLabel")}</p>
+              <p className="small text-tertiary mb-0">{t("notifyPreviewEmpty")}</p>
+            </div>
+          );
+        }
+
+        const trimmed = message.trim();
+        const contactSuffix =
+          shareContact && contact.trim() ? ` Contact: ${contact.trim()}` : "";
+        const body = (trimmed || t(REASON_BODY[reason] || REASON_BODY.other)) + contactSuffix;
+
         return (
-          <div className="container py-5">
-        <h2>About Avahanaa</h2>
-        <p className="lead">
-          Avahanaa bridges the communication gap between vehicle owners and their
-          community. Our platform marries QR codes with push notifications to
-          deliver quick, private alerts without exposing personal information.
-        </p>
-        <p>
-          Vehicle owners create an account in the Avahanaa mobile app, register
-          their vehicle details and receive a unique QR code. They print and
-          place this code on the car’s windscreen. When someone needs to
-          reach them—whether the car is blocking a driveway, the headlights
-          were left on or there’s an emergency inside—any passer‑by can
-          scan the code or enter the vehicle number on this site and send a
-          discreet notification. Owners are instantly alerted via the app
-          and can take appropriate action.
-        </p>
-        <p>
-          Our mission is to reduce congestion, enhance safety and protect
-          privacy by providing a frictionless way to alert vehicle owners.
-          Avahanaa is built with modern web technologies including React,
-          Bootstrap, and Firebase Cloud Messaging powered by Cloud Functions.
-        </p>
-        <h5>Reach out</h5>
-        <p>
-          Have questions or feedback? We’d love to hear from you.
-          Send us an email at
-          <a href="mailto:souvikbanerjee73@gmail.com">souvikbanerjee73@gmail.com</a>.
-        </p>
+          <div className="av-preview">
+            <p className="av-preview__label">{t("notifyPreviewLabel")}</p>
+            <div
+              className={`av-notif${reason === "emergency" ? " av-notif--emergency" : ""}`}
+            >
+              <div className="av-notif__head">
+                <img className="av-notif__icon" src="/logo.jpg" alt="" width="18" height="18" />
+                <span className="av-notif__app">{t("notifyPreviewApp")}</span>
+                <span className="av-notif__time">{t("notifyPreviewNow")}</span>
+              </div>
+              <p className="av-notif__title">
+                {t(PREVIEW_TITLES[reason] || PREVIEW_TITLES.other)}
+              </p>
+              <p className="av-notif__body">{body}</p>
+            </div>
           </div>
+        );
+      }
+
+      /** The server truncates at 280; matching it stops a silent trim. */
+      const NOTE_MAX_LENGTH = 280;
+
+      /**
+       * The three things somebody decides before they will touch the button:
+       * do I have to install something, will they find out who I am, and is
+       * this actually going to reach them.
+       *
+       * Answered above the fold, in three words each, because a stranger who
+       * has just scanned a sticker on a bike has never heard of us and has no
+       * reason to trust a page that asks them to set off an alarm.
+       */
+      function ScanAssurances() {
+        const { t } = useT();
+        return (
+          <ul className="av-assure" aria-label={t("notifyFreeNote")}>
+            <li>{t("notifyBadgeNoApp")}</li>
+            <li>{t("notifyBadgeAnon")}</li>
+            <li>{t("notifyBadgeSeconds")}</li>
+          </ul>
+        );
+      }
+
+      /**
+       * What to do when nobody is coming.
+       *
+       * The one screen every comparable product leaves empty. An owner who
+       * cannot come, or who never answers, leaves the person exactly as
+       * blocked as they were — and a page that responds to that with another
+       * reassuring sentence is a page that has stopped being useful. Saying
+       * "this is the point to call traffic police" is less flattering to us
+       * and more use to them.
+       */
+      function NextSteps() {
+        const { t } = useT();
+        return (
+          <div className="av-next">
+            <p className="av-next__head">{t("sentNoReplyWhatNow")}</p>
+            <ul className="av-next__list">
+              <li>{t("sentNoReplyStep1")}</li>
+              <li>{t("sentNoReplyStep2")}</li>
+            </ul>
+          </div>
+        );
+      }
+
+      /**
+       * Sent → on their phone → answered.
+       *
+       * `/api/status` already reports `delivered` and nothing was doing
+       * anything with it. A spinner that says "waiting" for two minutes is
+       * indistinguishable from a page that has silently broken; a trail that
+       * lights its second lamp the moment FCM confirms the handset is the
+       * difference between waiting and giving up.
+       */
+      function DeliveryTrail({ stage }) {
+        const { t } = useT();
+        const steps = [
+          { key: "sentTrailSent", at: 0 },
+          { key: "sentTrailDelivered", at: 1 },
+          { key: "sentTrailReply", at: 2 },
+        ];
+        return (
+          <ol className="av-trail" aria-label={t("sentWaiting")}>
+            {steps.map((step) => (
+              <li
+                key={step.key}
+                className="av-trail__step"
+                data-state={
+                  stage > step.at ? "done" : stage === step.at ? "current" : "todo"
+                }
+              >
+                <span className="av-trail__dot" aria-hidden="true"></span>
+                <span className="av-trail__label">{t(step.key)}</span>
+              </li>
+            ))}
+          </ol>
         );
       }
 
@@ -1425,6 +3052,7 @@
        * Notify page – main logic for reading the QR code and sending notifications
        */
       function NotifyPage() {
+        const { t } = useT();
         const queryDefaults = useMemo(() => {
           const params = getCurrentRouteParams();
           const qrParam = (params.get("qr") || "").trim();
@@ -1456,38 +3084,49 @@
         );
         const [user, setUser] = useState(null);
         const [ownerFromQr, setOwnerFromQr] = useState(null);
+        // Did `/api/qr` recognise this sticker? null while unknown.
+        //
+        // Tracked apart from `error` because two effects write that string and
+        // the wrong one was winning: the sticker lookup set "this code is not
+        // active", and the plate lookup — running in parallel, finding nothing,
+        // and seeing that a QR id was present — immediately cleared it. What
+        // reached a dead sticker was the full alert form, armed and ready, with
+        // the failure reduced to a grey line under the button. Somebody would
+        // pick a reason, press send, and only then be told.
+        const [qrResolved, setQrResolved] = useState(null);
         const [loading, setLoading] = useState(false);
         const [error, setError] = useState("");
+        // The reason **code**, not a label.
+        //
+        // This used to hold an English sentence which a lookup table collapsed
+        // onto one of three codes — so "your headlights are on", "your alarm is
+        // ringing" and "there is a pet inside" all reached the owner as the
+        // generic `other`. The state is the wire value now, and the words are a
+        // rendering of it, which is also what makes the Kannada UI possible.
         const [reason, setReason] = useState("");
         const [message, setMessage] = useState("");
         const [contact, setContact] = useState("");
         const [shareContact, setShareContact] = useState(false);
         const [sent, setSent] = useState(false);
+        const [sentAt, setSentAt] = useState(null);
         const [statusHandle, setStatusHandle] = useState(null);
         const [ownerReply, setOwnerReply] = useState(null);
+        // FCM has confirmed the handset. `/api/status` has always reported
+        // this and the page has always thrown it away.
+        const [delivered, setDelivered] = useState(false);
         const [waitedOut, setWaitedOut] = useState(false);
         const [sending, setSending] = useState(false);
+        // When the send button comes back after a 429, as a wall-clock
+        // instant rather than a countdown, so a backgrounded tab resumes with
+        // the right number instead of a frozen one.
+        const [retryAt, setRetryAt] = useState(0);
+        // Bumped by "Check again", which is the only way back from the
+        // ten-minute give-up. Without it the effect below never re-runs,
+        // because `statusHandle` has not changed.
+        const [pollNonce, setPollNonce] = useState(0);
         const [carDetails, setCarDetails] = useState(() => ({
           ...queryDefaults.directDetails,
         }));
-        // Vestigial, and deliberately kept.
-        //
-        // Several code paths still write to this; nothing reads it any more,
-        // because the send no longer assembles a push target — `/api/notify`
-        // gets a QR id and derives the rest server-side. Every field it is
-        // ever handed is now the empty string, since `/api/qr` returns no
-        // token, no userId and no vehicleId.
-        //
-        // Kept rather than torn out mid-merge: removing it means editing
-        // seven call sites in code that has just been reconciled, and the
-        // one path that used to put a *real* token in here — decoding a
-        // legacy encrypted sticker — is cut above. Worth deleting properly
-        // in a follow-up, where the diff can be read on its own.
-        const [notifyTarget, setNotifyTarget] = useState({
-          fcmToken: "",
-          userId: "",
-          vehicleId: "",
-        });
         const [notifyFeedback, setNotifyFeedback] = useState({
           message: "",
           variant: "muted",
@@ -1523,7 +3162,7 @@
           params.delete("qr");
           params.delete("id");
           const basePath = parseShortNotifyRoute(window.location.pathname)
-            ? "./index.html"
+            ? "/index.html"
             : window.location.pathname;
           const nextQuery = params.toString();
           const nextUrl = nextQuery
@@ -1636,17 +3275,10 @@
             }
             if (!resolvedUser) {
               if (!initialQr) {
-                setError(
-                  "No owner record was found for this identifier. Please check the QR code or vehicle number and try again."
-                );
+                setError(t("notifyNoRecord"));
               } else {
                 setError("");
               }
-              setNotifyTarget({
-                fcmToken: "",
-                userId: "",
-                vehicleId: "",
-              });
               setNotifyFeedback({ message: "", variant: "muted" });
               setUser(null);
               setLoading(false);
@@ -1703,16 +3335,13 @@
             // no token, no userId, not even a vehicleId — because the server
             // resolves the owner from the QR id with its own credentials and
             // accepts nothing about them from this page.
-            setNotifyFeedback({
-              message: "Ready to alert the owner instantly.",
-              variant: "muted",
-            });
+            setNotifyFeedback({ message: t("notifyReady"), variant: "muted" });
           }
           resolveId();
           return () => {
             cancelled = true;
           };
-        }, [displayPlate, identifier, initialQr]);
+        }, [displayPlate, identifier, initialQr, t]);
 
         useEffect(() => {
           let cancelled = false;
@@ -1720,14 +3349,8 @@
             setOwnerFromQr(null);
             if (!identifier) {
               setNotifyFeedback({
-                message:
-                  "Notifications are available only when you scan a registered Avahanaa QR code.",
+                message: t("notifyScanOnly"),
                 variant: "muted",
-              });
-              setNotifyTarget({
-                fcmToken: "",
-                userId: "",
-                vehicleId: "",
               });
             }
             return () => {
@@ -1736,14 +3359,8 @@
           }
           if (!functionsClient) {
             setOwnerFromQr(null);
-            setNotifyTarget({
-              fcmToken: "",
-              userId: "",
-              vehicleId: "",
-            });
             setNotifyFeedback({
-              message:
-                "Notifications service is unavailable right now. Please try again later.",
+              message: t("notifyUnavailable"),
               variant: "danger",
             });
             return () => {
@@ -1752,24 +3369,15 @@
           }
           if (!db) {
             setOwnerFromQr(null);
-            setNotifyTarget({
-              fcmToken: "",
-              userId: "",
-              vehicleId: "",
-            });
             setNotifyFeedback({
-              message:
-                "We could not connect to the owner directory right now. Please try again shortly.",
+              message: t("notifyDirectoryUnavailable"),
               variant: "danger",
             });
             return () => {
               cancelled = true;
             };
           }
-          setNotifyFeedback({
-            message: "Fetching owner profile...",
-            variant: "info",
-          });
+          setNotifyFeedback({ message: t("notifyFetching"), variant: "info" });
           async function hydrateFromQr() {
             try {
               const owner = await fetchOwnerByQr(initialQr);
@@ -1778,34 +3386,24 @@
               }
               if (!owner) {
                 setOwnerFromQr(null);
+                setQrResolved(false);
                 if (!user) {
-                  setError(
-                    "This QR code is not yet linked to an owner profile. Ask them to open the Avahanaa app."
-                  );
+                  setError(t("notifyNotLinked"));
                 } else {
                   setError("");
                 }
-                setNotifyTarget({
-                  fcmToken: "",
-                  userId: "",
-                  vehicleId: "",
-                });
                 setNotifyFeedback({
-                  message: NOT_ACTIVE_MESSAGE,
+                  message: t("notifyNotActive"),
                   variant: "warning",
                 });
                 return;
               }
               setOwnerFromQr(owner);
+              setQrResolved(true);
               setError("");
               if (!owner.isActive) {
-                setNotifyTarget({
-                  fcmToken: "",
-                  userId: owner.userId || "",
-                  vehicleId: owner.vehicleId || "",
-                });
                 setNotifyFeedback({
-                  message: "This QR code is currently inactive for notifications.",
+                  message: t("notifyInactiveCode"),
                   variant: "warning",
                 });
                 return;
@@ -1825,15 +3423,7 @@
                   return next;
                 });
               }
-              setNotifyTarget({
-                fcmToken: owner.fcmToken,
-                userId: owner.userId || "",
-                vehicleId: owner.vehicleId || "",
-              });
-              setNotifyFeedback({
-                message: "Ready to alert the owner instantly.",
-                variant: "muted",
-              });
+              setNotifyFeedback({ message: t("notifyReady"), variant: "muted" });
             } catch (qrErr) {
               if (!cancelled) {
                 console.error(
@@ -1842,8 +3432,7 @@
                   qrErr
                 );
                 setNotifyFeedback({
-                  message:
-                    "Notifications service is unavailable right now. Please try again later.",
+                  message: t("notifyUnavailable"),
                   variant: "danger",
                 });
               }
@@ -1853,7 +3442,7 @@
           return () => {
             cancelled = true;
           };
-        }, [initialQr, user, identifier]);
+        }, [initialQr, user, identifier, t]);
 
         useEffect(() => {
           if (user || !ownerFromQr) {
@@ -1865,7 +3454,6 @@
             vehicleId: ownerFromQr.vehicleId || "",
             qrCodeId: initialQr || "",
             carDetails: ownerFromQr.carDetails || {},
-            fcmToken: ownerFromQr.fcmToken || "",
             licensePlate:
               ownerFromQr.carDetails &&
               typeof ownerFromQr.carDetails.licensePlate === "string"
@@ -1874,15 +3462,6 @@
           });
           setError("");
         }, [user, ownerFromQr, initialQr]);
-
-        const reasonCodeMap = {
-          "Your vehicle is blocking my way": "blocking_driveway",
-          "Your headlights/hazards are on": "other",
-          "Your car alarm is ringing": "other",
-          "There is a pet inside, please check": "other",
-          "It’s urgent – please contact me": "emergency",
-          "Other (I’ll type a quick note)": "other",
-        };
 
         // Wait for the owner to answer.
         //
@@ -1902,6 +3481,7 @@
           let cancelled = false;
           let timer = null;
           const startedAt = Date.now();
+          setWaitedOut(false);
           const GIVE_UP_AFTER_MS = 10 * 60 * 1000;
 
           async function check() {
@@ -1918,7 +3498,14 @@
                   `&t=${encodeURIComponent(statusHandle.token)}`
               );
               if (cancelled) return;
+              if (data && data.delivered) {
+                setDelivered(true);
+              }
               if (data && data.acknowledged && data.reply) {
+                // Worth feeling as well as seeing: this page is often being
+                // held at arm's length, or glanced at between looking up the
+                // road for the owner.
+                haptic([18, 60, 18]);
                 setOwnerReply(data.reply);
                 return;
               }
@@ -1928,15 +3515,26 @@
               console.debug("status poll failed", error);
             }
 
-            if (!cancelled) timer = setTimeout(check, 4000);
+            // Backs off with the wait. The first half-minute is when the
+            // owner is most likely to be reaching for their phone and when
+            // somebody is staring hardest at this screen; ten minutes in they
+            // have put the phone in a pocket and a poll every four seconds is
+            // just battery.
+            if (!cancelled) {
+              const waited = Date.now() - startedAt;
+              const gap = waited < 30000 ? 2500 : waited < 180000 ? 4000 : 8000;
+              timer = setTimeout(check, gap);
+            }
           }
 
-          timer = setTimeout(check, 2500);
+          // Sooner than the old 2500ms: the first poll is the one that lights
+          // "on their phone", and that is the reassurance worth having early.
+          timer = setTimeout(check, 1200);
           return () => {
             cancelled = true;
             if (timer) clearTimeout(timer);
           };
-        }, [statusHandle, ownerReply]);
+        }, [statusHandle, ownerReply, pollNonce]);
 
         // Counts the ETA down while the page is open.
         //
@@ -1966,35 +3564,76 @@
           return () => clearInterval(id);
         }, [ownerReply]);
 
+        // How long they have been standing there. Shown rather than hidden:
+        // a spinner with no clock is indistinguishable from a page that has
+        // quietly broken, and the reflex is to reload — which loses the status
+        // token and with it the reply this screen exists to deliver.
+        const waitingElapsed = useElapsed(sent && !ownerReply ? sentAt : null);
+
+        // The screen stays awake exactly as long as there is an unanswered
+        // alert out. Not a moment longer.
+        useWakeLock(Boolean(sent && !ownerReply && !waitedOut));
+
+        // The 429 countdown, and the button coming back on its own.
+        const [retryLeft, setRetryLeft] = useState(0);
+        useEffect(() => {
+          if (!retryAt) {
+            setRetryLeft(0);
+            return undefined;
+          }
+          const tick = () => {
+            const left = Math.max(0, Math.round((retryAt - Date.now()) / 1000));
+            setRetryLeft(left);
+            if (left === 0) {
+              setRetryAt(0);
+              setNotifyFeedback({
+                message: t("notifyRateLimitedReady"),
+                variant: "muted",
+              });
+            }
+          };
+          tick();
+          const id = setInterval(tick, 1000);
+          return () => clearInterval(id);
+        }, [retryAt, t]);
+
         async function handleSubmit(e) {
           e.preventDefault();
           if (sending) return;
-          // No token, no userId, no vehicleId assembled here any more. The
-          // server derives all three from the QR id, which is the only thing
-          // it now trusts from this page.
+          // No token, no userId, no vehicleId assembled here. The server
+          // derives all three from the QR id, which is the only thing it now
+          // trusts from this page.
           const targetQrId =
             initialQr || (user && (user.qrCodeId || user.qrId)) || identifier;
           if (!targetQrId) {
             setNotifyFeedback({
-              message:
-                "We could not confirm the QR reference for this vehicle. Please refresh the page or rescan the Avahanaa QR code.",
+              message: t("notifyNoQrRef"),
               variant: "warning",
             });
             return;
           }
-          const reasonCode = reasonCodeMap[reason] || "other";
-          const userPlate =
-            carDetails.licensePlate ||
-            (user && (user.licensePlate || user.vehicleNumber)) ||
-            "";
-          const title = userPlate
-            ? `Vehicle Alert – ${userPlate}`
-            : "Vehicle Alert";
+          const reasonCode = reason || "other";
+          // What the owner reads under the title.
+          //
+          // In the language the page is being read in, deliberately. A typed
+          // note has always gone through verbatim in whatever language the
+          // scanner typed it, and this fallback is a note written on their
+          // behalf — it should not be the one line on the screen that is
+          // secretly something else. That matters because the preview above
+          // the send button shows this exact string: a preview that quietly
+          // differs from what is sent is worse than no preview.
+          //
+          // The owner is not left guessing either way. The *title* is rendered
+          // by their own app from the reason code, in their own language, so
+          // the headline is always intelligible and this line is detail under
+          // it.
+          //
+          // It replaced "A visitor has selected the reason: Blocking
+          // Driveway." — the shape of a form submission rather than of
+          // somebody asking for help.
           const baseMessage = message?.trim()
             ? message.trim()
-            : reason
-            ? `A visitor has selected the reason: ${reason}.`
-            : "A visitor is requesting your attention regarding your vehicle.";
+            : t(REASON_BODY[reasonCode] || REASON_BODY.other);
           const trimmedContact = contact?.trim();
           const bodyMsg =
             shareContact && trimmedContact
@@ -2003,41 +3642,9 @@
           setSending(true);
           setError("");
           setNotifyFeedback({
-            message: "Sending notification...",
+            message: t("notifySendingStatus"),
             variant: "info",
           });
-          const metadata = {
-            reason: reasonCode,
-            reasonLabel: reason || "",
-            message: bodyMsg,
-            identifier: identifier || initialQr || "",
-          };
-          if (shareContact && trimmedContact) {
-            metadata.contact = trimmedContact;
-          }
-          if (userPlate) {
-            metadata.licensePlate = userPlate;
-          }
-          if (carDetails.carModel) {
-            metadata.carModel = carDetails.carModel;
-          } else if (
-            user &&
-            user.carDetails &&
-            typeof user.carDetails.carModel === "string" &&
-            user.carDetails.carModel.trim()
-          ) {
-            metadata.carModel = user.carDetails.carModel.trim();
-          }
-          if (carDetails.color) {
-            metadata.color = carDetails.color;
-          } else if (
-            user &&
-            user.carDetails &&
-            typeof user.carDetails.color === "string" &&
-            user.carDetails.color.trim()
-          ) {
-            metadata.color = user.carDetails.color.trim();
-          }
           try {
             // Awaited before the send, not alongside it. The alert must
             // carry the location or nothing, and `captureScanLocation` is
@@ -2047,195 +3654,292 @@
             // all.
             const scanLocation = await captureScanLocation();
 
-            const result = await triggerNotifyFunction({
-              qrCodeId: targetQrId,
-              reason: reasonCode,
-              message: bodyMsg,
-              location: scanLocation,
-            });
+            const result = await triggerNotifyFunction(
+              {
+                qrCodeId: targetQrId,
+                reason: reasonCode,
+                message: bodyMsg,
+                location: scanLocation,
+              },
+              t
+            );
             if (result.ok) {
-              setNotifyFeedback({
-                message:
-                  "Notification sent successfully to the owner's device.",
-                variant: "success",
-              });
+              haptic([14, 50, 14]);
+              setNotifyFeedback({ message: t("notifySent"), variant: "success" });
               if (result.notificationId && result.statusToken) {
                 setStatusHandle({
                   id: result.notificationId,
                   token: result.statusToken,
                 });
               }
+              setSentAt(Date.now());
               setSent(true);
             } else {
-              const failureMessage =
-                result.message || "Failed to send notification.";
-              setNotifyFeedback({
-                message: failureMessage,
-                variant: "danger",
-              });
+              const failureMessage = result.message || t("notifySendFailed");
+              // A repeat inside the window is not a failure and should not be
+              // dressed as one: the owner *was* reached. Amber, with a clock.
+              if (result.alreadyAlerted) {
+                if (result.retryAfter) {
+                  setRetryAt(Date.now() + result.retryAfter * 1000);
+                }
+                setNotifyFeedback({
+                  message: failureMessage,
+                  variant: "warning",
+                });
+              } else {
+                setNotifyFeedback({
+                  message: failureMessage,
+                  variant: "danger",
+                });
+              }
             }
           } catch (err) {
             console.error("Failed to send notification", err);
             setNotifyFeedback({
-              message: err?.message || "Failed to send notification.",
+              message: err?.message || t("notifySendFailed"),
               variant: "danger",
             });
           } finally {
             setSending(false);
           }
         }
+
+        // No sticker, no plate: somebody typed the address, or the camera
+        // failed and they walked here from the home page.
         if (!identifier) {
           return (
-            <div className="container py-5">
-              <h2>Notify Vehicle Owner</h2>
-              <p>Please enter the <strong>vehicle number</strong> or the QR identifier to proceed.</p>
-              <div className="mb-3 row g-2">
-                <div className="col-auto flex-grow-1">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Vehicle number or QR ID"
-                    value={identifierInput}
-                    onChange={(e) => setIdentifierInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleIdentifierResolve();
-                      }
-                    }}
-                  />
+            <section className="av-scan">
+              <div className="container container--narrow">
+                <div className="av-scan__head">
+                  <h1 className="mb-2">{t("notifyEnterTitle")}</h1>
+                  <p className="lead mb-0">{t("notifyEnterBody")}</p>
                 </div>
-                <div className="col-auto">
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handleIdentifierResolve}
-                    disabled={!identifierInput.trim()}
-                  >
-                    Resolve
-                  </button>
+                <div className="av-card av-card--lg">
+                  <label className="av-label" htmlFor="notify-identifier">
+                    {t("notifyEnterLabel")}
+                  </label>
+                  <div className="av-input-group">
+                    <input
+                      id="notify-identifier"
+                      type="text"
+                      className="av-input av-input--plate"
+                      placeholder={t("notifyEnterPlaceholder")}
+                      value={identifierInput}
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      autoComplete="off"
+                      spellCheck="false"
+                      // The plate is the only thing on this screen, so it gets
+                      // the keyboard up without a tap. Not done anywhere the
+                      // field is one of several: a keyboard that covers the
+                      // page before it has been read is worse than a tap.
+                      autoFocus
+                      enterKeyHint="search"
+                      onChange={(e) => setIdentifierInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleIdentifierResolve();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="av-btn av-btn--primary"
+                      onClick={handleIdentifierResolve}
+                      disabled={!identifierInput.trim()}
+                    >
+                      {t("notifyResolve")}
+                    </button>
+                  </div>
+                  <p className="av-help mb-0">{t("notifyEnterHelp")}</p>
                 </div>
+                <ScanAssurances />
               </div>
-            </div>
+            </section>
           );
         }
+
         if (loading) {
           return (
-            <div className="container py-5 text-center">
-              <div className="spinner-border text-primary" role="status"></div>
-              <p className="mt-3">Resolving vehicle…</p>
-            </div>
+            <section className="av-scan">
+              <div className="container container--narrow text-center av-scan__wait">
+                <span
+                  className="av-spinner av-spinner--lg"
+                  role="status"
+                  aria-label={t("notifyResolving")}
+                ></span>
+                <p className="mt-3 mb-1 fw-semibold">{t("notifyResolving")}</p>
+                <p className="small text-tertiary mb-0">{t("notifyResolvingNote")}</p>
+              </div>
+            </section>
           );
         }
-        if (error) {
+
+        // A sticker the server does not recognise, with no plate to fall back
+        // on. There is nobody to alert, so the form is not shown — presenting a
+        // working-looking one is how somebody ends up believing an alert went
+        // out that never did.
+        const deadSticker = Boolean(initialQr) && qrResolved === false && !user;
+
+        if (error || deadSticker) {
           return (
-            <div className="container py-5">
-              <div className="alert alert-danger">{error}</div>
-              <a href="./index.html?page=notify" className="btn btn-secondary">
-                Try Again
-              </a>
-            </div>
+            <section className="av-scan">
+              <div className="container container--narrow">
+                <div className="av-notice av-notice--danger mb-4" role="alert">
+                  <span className="av-notice__icon" aria-hidden="true">{"⚠️"}</span>
+                  <p>{error || t("notifyNotActive")}</p>
+                </div>
+                <div className="av-row">
+                  <button
+                    type="button"
+                    className="av-btn av-btn--primary"
+                    onClick={() => window.location.reload()}
+                  >
+                    {t("notifyRetry")}
+                  </button>
+                  {/* A dead end is where people give up. If the sticker will
+                      not resolve, the plate is still printed on the vehicle in
+                      front of them and still reaches the same owner. */}
+                  <a href={pageHref("notify")} className="av-btn av-btn--ghost">
+                    {t("notifyEnterPlateInstead")}
+                  </a>
+                </div>
+              </div>
+            </section>
           );
         }
+
         if (sent) {
           // This screen is the point of the product.
           //
-          // Someone is standing next to a stranger's car, annoyed, deciding
-          // how annoyed to be. "Sent successfully" — which is all this used to
-          // say — answers a question they did not ask. What they want to know
-          // is whether anybody is actually coming, and the moment they can see
-          // that, the situation defuses itself. So the page waits with them.
+          // Someone is standing next to a stranger's vehicle, annoyed,
+          // deciding how annoyed to be. "Sent successfully" — which is all
+          // this used to say — answers a question they did not ask. What they
+          // want to know is whether anybody is actually coming, and the moment
+          // they can see that, the situation defuses itself. So the page waits
+          // with them, keeps the screen awake, and reports every step it
+          // genuinely knows about.
           const onTheWay = ownerReply && ownerReply.onTheWay;
+          const cannotCome = ownerReply && ownerReply.id === "cannot_come";
+          // The server sends the label in English. When the page is being read
+          // in Kannada, render the app's own Kannada wording for the same
+          // reply id and fall back to the server's text for an id this deploy
+          // has never heard of.
+          const replyLabel = ownerReply
+            ? (REPLY_KEYS[ownerReply.id] ? t(REPLY_KEYS[ownerReply.id]) : ownerReply.label)
+            : "";
 
           return (
-            <div className="container py-5">
-              <div className="row justify-content-center">
-                <div className="col-12 col-md-8 col-lg-6">
-                  <div className="card shadow-sm border-0">
-                    <div className="card-body text-center p-4 p-md-5">
-                      {ownerReply ? (
-                        <>
-                          <div
-                            className={`display-4 mb-3 ${
-                              onTheWay ? "text-success" : "text-warning"
-                            }`}
-                            aria-hidden="true"
-                          >
-                            {onTheWay ? "\u{1F697}" : "\u{1F440}"}
+            <section className="av-scan">
+              <div className="container container--narrow">
+                <div className="av-card av-card--lg text-center av-result">
+                  {ownerReply ? (
+                    <>
+                      <div
+                        className={`av-verdict${onTheWay ? " av-verdict--good" : ""}`}
+                        aria-hidden="true"
+                      >
+                        {onTheWay ? "\u{1F6F5}" : cannotCome ? "\u{1F64F}" : "\u{1F440}"}
+                      </div>
+                      <h2 className="mb-3">{replyLabel}</h2>
+
+                      {onTheWay && etaLeft !== null && (
+                        <div className="av-eta mb-4" aria-live="polite">
+                          <div className="av-metric av-metric--success">
+                            {etaLeft > 0 ? formatClock(etaLeft) : t("sentEtaAnyMoment")}
                           </div>
-                          <h2 className="h4 mb-3">{ownerReply.label}</h2>
-                          {onTheWay && etaLeft !== null && (
-                            <div className="mb-3" aria-live="polite">
-                              <div className="display-6 fw-semibold text-success">
-                                {etaLeft > 0
-                                  ? `${Math.floor(etaLeft / 60)}:${String(
-                                      etaLeft % 60
-                                    ).padStart(2, "0")}`
-                                  : "Any moment"}
-                              </div>
-                              <div className="small text-muted">
-                                {etaLeft > 0
-                                  ? "estimated time until they arrive"
-                                  : "they should be arriving now"}
-                              </div>
-                            </div>
-                          )}
-                          <p className="text-muted mb-4">
-                            {onTheWay
-                              ? "Thanks for letting them know \u2014 you can wait or head off, whichever suits you."
-                              : "They have seen your message. Thanks for taking the trouble to send it."}
-                          </p>
-                        </>
-                      ) : waitedOut ? (
-                        <>
-                          <div className="display-4 mb-3 text-success" aria-hidden="true">
-                            {"\u2714\uFE0F"}
+                          <div className="small text-tertiary mt-1">
+                            {etaLeft > 0 ? t("sentEtaLabel") : t("sentEtaNow")}
                           </div>
-                          <h2 className="h4 mb-3">The owner has been alerted</h2>
-                          <p className="text-muted mb-4">
-                            They have not replied yet, but the alert reached their
-                            phone and it keeps reminding them until they open it.
-                            Thanks for taking the trouble to send it.
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <div className="display-4 mb-3 text-success" aria-hidden="true">
-                            {"\u2714\uFE0F"}
-                          </div>
-                          <h2 className="h4 mb-3">The owner has been alerted</h2>
-                          <p className="text-muted mb-2">
-                            Their phone is ringing now. Hang on a moment and this
-                            page will tell you when they answer.
-                          </p>
-                          <div
-                            className="d-flex align-items-center justify-content-center gap-2 text-muted mb-4"
-                            role="status"
-                            aria-live="polite"
-                          >
-                            <span
-                              className="spinner-border spinner-border-sm"
-                              aria-hidden="true"
-                            ></span>
-                            <span className="small">Waiting for a reply…</span>
-                          </div>
-                        </>
+                        </div>
                       )}
 
-                      <p className="small text-muted mb-4">
-                        Your details were never shared with the owner, and theirs
-                        were never shared with you.
+                      <p className="mb-4">
+                        {onTheWay
+                          ? t("sentOnTheWayNote")
+                          : cannotCome
+                          ? t("sentCannotComeNote")
+                          : t("sentSeenNote")}
                       </p>
-                      <a href="./index.html" className="btn btn-outline-secondary">
-                        Done
-                      </a>
-                    </div>
-                  </div>
+
+                      {/* They have answered and cannot come. Waiting here is
+                          now pointless, and saying so is more use than another
+                          reassuring sentence. */}
+                      {cannotCome && <NextSteps />}
+                    </>
+                  ) : waitedOut ? (
+                    <>
+                      <div className="av-pulse av-pulse--still mb-3" aria-hidden="true">
+                        {"✔️"}
+                      </div>
+                      <h2 className="mb-3">{t("sentAlerted")}</h2>
+                      <p className="mb-4">{t("sentNoReplyYet")}</p>
+                      <NextSteps />
+                      <button
+                        type="button"
+                        className="av-btn av-btn--secondary mt-3"
+                        onClick={() => {
+                          setWaitedOut(false);
+                          setPollNonce((n) => n + 1);
+                        }}
+                      >
+                        {t("sentCheckAgain")}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="av-pulse mb-3" aria-hidden="true">
+                        {"✔️"}
+                      </div>
+                      <h2 className="mb-2">
+                        {delivered ? t("sentDelivered") : t("sentAlerted")}
+                      </h2>
+                      <p className="mb-4">{t("sentRinging")}</p>
+
+                      <DeliveryTrail stage={delivered ? 1 : 0} />
+
+                      <div
+                        className="av-waiting"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        <span className="av-spinner av-spinner--sm" aria-hidden="true"></span>
+                        <span className="small text-tertiary">
+                          {t("sentWaiting")}
+                          {waitingElapsed !== null && waitingElapsed > 4 && (
+                            // The separator is a character rather than only a
+                            // margin: this is a live region, and a screen
+                            // reader reads the concatenated text, which without
+                            // it announces "waiting for their answer0:12".
+                            <span className="av-waiting__clock">
+                              {"\u00B7 "}
+                              {formatClock(waitingElapsed)}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+
+                      {"wakeLock" in navigator && (
+                        <p className="small text-tertiary mt-3 mb-0">
+                          {t("sentKeepOpen")}
+                        </p>
+                      )}
+                    </>
+                  )}
+
+                  <p className="small text-tertiary av-result__privacy">
+                    {t("sentPrivacy")}
+                  </p>
+                  <a href="/index.html" className="av-btn av-btn--secondary">
+                    {t("sentDone")}
+                  </a>
                 </div>
               </div>
-            </div>
+            </section>
           );
         }
+
         const canRenderForm = user || ownerFromQr || identifier || initialQr;
         if (!canRenderForm) {
           return null;
@@ -2247,164 +3951,296 @@
           success: "text-success",
           danger: "text-danger",
           warning: "text-warning",
-          info: "text-info",
-          muted: "text-muted",
+          info: "text-primary",
+          muted: "text-tertiary",
         };
         const feedbackClass =
-          feedbackVariantClass[notifyFeedback.variant] || "text-muted";
-        // Reasons with icons for a more engaging UI
-        const reasonOptions = [
-          { label: "Your vehicle is blocking my way", icon: "bi-exclamation-triangle-fill" },
-          { label: "Your headlights/hazards are on", icon: "bi-lightbulb-fill" },
-          { label: "Your car alarm is ringing", icon: "bi-bell-fill" },
-          { label: "There is a pet inside, please check", icon: "bi-heart-fill" },
-          { label: "It’s urgent – please contact me", icon: "bi-telephone-fill" },
-          { label: "Other (I’ll type a quick note)", icon: "bi-pencil-fill" },
-        ];
+          feedbackVariantClass[notifyFeedback.variant] || "text-tertiary";
+        const noteRequired = reason === "other";
+        const noteRemaining = NOTE_MAX_LENGTH - message.length;
+        const throttled = retryLeft > 0;
+        const sendDisabled = sending || !reason || !canNotify || throttled;
+
+        // Two headlines, because the sticker is scanned for two different
+        // reasons. Somebody who came here from a QR code is nine times out of
+        // ten blocked by the vehicle they scanned, and naming that is what
+        // makes the page feel like it was written for them. Somebody who typed
+        // a plate could be doing anything, so that one stays open.
+        const blockedFraming = Boolean(initialQr);
+
         return (
-          <div className="container py-5">
-            <div className="row g-4">
-              <div className="col-12 col-lg-8">
-                <div className="card shadow-sm mb-4">
-                <div className="card-body">
-                    <h5 className="card-title mb-3">Sending a note to the owner</h5>
-                    <p className="mb-0">
-                      {displayPlate ? (
-                        <span>Vehicle number: <strong>{displayPlate}</strong></span>
-                      ) : (
-                        <span>Identifier: <strong>{displayIdentifier}</strong></span>
-                      )}
-                    </p>
-                    <p className="text-muted mb-0">
-                      Choose a reason and optionally leave a short note or share your
-                      contact. Your message will be sent instantly to the owner’s
-                      app.
-                    </p>
-                  </div>
-                </div>
-                <div className="card shadow-sm">
-                  <div className="card-body">
-                    <form onSubmit={handleSubmit}>
-                      <div className="mb-3">
-                        <label className="form-label fw-semibold">Reason</label>
-                        <div className="row g-2 reason-buttons">
-                          {reasonOptions.map((opt) => (
-                            <div className="col-12 col-md-6" key={opt.label}>
-                              <button
-                                type="button"
-                                className={`btn ${reason === opt.label ? "active" : ""} w-100`}
-                                onClick={() => setReason(opt.label)}
-                              >
-                                <i className={`bi ${opt.icon}`}></i>
-                                {opt.label}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      {reason === "Other (I’ll type a quick note)" && (
-                        <div className="mb-3">
-                          <label className="form-label">Quick note</label>
-                          <textarea
-                            className="form-control"
-                            rows="3"
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Type your message here..."
-                          ></textarea>
-                        </div>
-                      )}
-                      {reason !== "Other (I’ll type a quick note)" && (
-                        <div className="mb-3">
-                          <label className="form-label">Optional note</label>
-                          <textarea
-                            className="form-control"
-                            rows="3"
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Add quick context..."
-                          ></textarea>
-                        </div>
-                      )}
-                      <div className="form-check form-switch mb-3">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id="shareContactToggle"
-                          checked={shareContact}
-                          onChange={(e) => {
-                            setShareContact(e.target.checked);
-                            if (!e.target.checked) {
-                              setContact("");
-                            }
-                          }}
-                        />
-                        <label className="form-check-label" htmlFor="shareContactToggle">
-                          Share my contact (optional)
-                        </label>
-                      </div>
-                      {shareContact && (
-                        <div className="mb-3">
-                          <label className="form-label">Your contact</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Your phone or email"
-                            value={contact}
-                            onChange={(e) => setContact(e.target.value)}
-                          />
-                          <div className="form-text">
-                            Your contact details will be shared with the owner
-                            only if you provide them.
-                          </div>
-                        </div>
-                      )}
-                      <button
-                        id="notifyOwnerBtn"
-                        type="submit"
-                        className="btn btn-success w-100 mt-2"
-                        disabled={sending || !reason || !canNotify}
-                      >
-                        {sending ? "Sending…" : "Notify Owner Now"}
-                      </button>
-                      {notifyFeedback.message && (
-                        <p
-                          id="notifyOwnerFeedback"
-                          className={`small mt-2 ${feedbackClass}`}
-                        >
-                          {notifyFeedback.message}
+          <section className="av-scan">
+            <div className="container container--narrow">
+              <div className="av-scan__head">
+                <h1 className="mb-2">
+                  {blockedFraming ? t("notifyTitle") : t("notifyTitleGeneric")}
+                </h1>
+                <p className="lead mb-0">
+                  {blockedFraming ? t("notifyLead") : t("notifyLeadGeneric")}
+                </p>
+              </div>
+
+              <ScanAssurances />
+
+              <VehicleCard
+                plate={displayPlate}
+                carModel={carDetails.carModel}
+                color={carDetails.color}
+                identifier={displayIdentifier}
+                // Resolved by either route — the sticker (`ownerFromQr`) or a
+                // typed plate (`user`). Keyed off only the first, this sat on
+                // "checking…" forever for anybody who typed a number plate,
+                // which is the fallback people reach for when the sticker is
+                // scratched and exactly when they least need to be told the
+                // lookup might not have worked.
+                status={ownerFromQr || user ? "active" : "pending"}
+              />
+
+              <form onSubmit={handleSubmit} className="av-form">
+                <fieldset className="av-block">
+                  <legend className="av-block__head">
+                    <span className="av-block__n" aria-hidden="true">1</span>
+                    <span className="av-block__text">
+                      <span className="av-block__title">{t("notifyReasonLabel")}</span>
+                      <span className="av-block__hint">{t("notifyReasonHelp")}</span>
+                    </span>
+                  </legend>
+                  <ReasonGrid reason={reason} onPick={setReason} />
+                </fieldset>
+
+                {/* Everything below stays out of the way until there is a
+                    reason. Showing a note field, a contact toggle and an empty
+                    preview to somebody who has not answered the first question
+                    is three decisions offered before the one that matters. */}
+                {reason && (
+                  <div className="av-block av-reveal" key={reason}>
+                    <div className="av-block__head">
+                      <span className="av-block__n" aria-hidden="true">2</span>
+                      <span className="av-block__text">
+                        <span className="av-block__title">
+                          {noteRequired ? t("notifyNoteRequiredLabel") : t("notifyNoteLabel")}
+                        </span>
+                        <span className="av-block__hint">
+                          {noteRequired ? t("reasonOtherHint") : t("notifyNoteOptional")}
+                        </span>
+                      </span>
+                    </div>
+
+                    <NotePresets reason={reason} message={message} onPick={setMessage} />
+
+                    <div className="av-field">
+                      <label className="visually-hidden" htmlFor="notify-note">
+                        {noteRequired ? t("notifyNoteRequiredLabel") : t("notifyNoteLabel")}
+                      </label>
+                      <textarea
+                        id="notify-note"
+                        className="av-textarea"
+                        rows="2"
+                        maxLength={NOTE_MAX_LENGTH}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder={
+                          noteRequired
+                            ? t("notifyNoteRequiredPlaceholder")
+                            : t("notifyNotePlaceholder")
+                        }
+                      ></textarea>
+                      {/* Only near the ceiling. A counter that is always on
+                          reads as a limit being enforced on you; one that
+                          appears at 60 characters left is a warning. */}
+                      {noteRemaining <= 60 && (
+                        <p className="av-help av-help--count mb-0">
+                          {t("notifyNoteCount").replace("{n}", String(noteRemaining))}
                         </p>
                       )}
-                    </form>
+                    </div>
+
+                    <AlertPreview
+                      reason={reason}
+                      message={message}
+                      shareContact={shareContact}
+                      contact={contact}
+                    />
+
+                    <label className="av-switch">
+                      <input
+                        type="checkbox"
+                        checked={shareContact}
+                        onChange={(e) => {
+                          setShareContact(e.target.checked);
+                          if (!e.target.checked) {
+                            setContact("");
+                          }
+                        }}
+                      />
+                      <span className="av-switch__track" aria-hidden="true"></span>
+                      <span className="av-switch__label">{t("notifyShareContact")}</span>
+                    </label>
+                    <p className="av-help mb-0">{t("notifyShareContactHelp")}</p>
+
+                    {shareContact && (
+                      <div className="av-field av-reveal">
+                        <label className="av-label" htmlFor="notify-contact">
+                          {t("notifyContactLabel")}
+                        </label>
+                        <input
+                          id="notify-contact"
+                          type="text"
+                          className="av-input"
+                          placeholder={t("notifyContactPlaceholder")}
+                          value={contact}
+                          onChange={(e) => setContact(e.target.value)}
+                        />
+                        <p className="av-help mb-0">{t("notifyContactHelp")}</p>
+                      </div>
+                    )}
                   </div>
+                )}
+
+                {/* Sticky rather than duplicated. One send button, in flow at
+                    the foot of the form, that pins itself to the bottom of the
+                    viewport while the form is taller than the screen — so the
+                    thing they came here to do is never more than a thumb-reach
+                    away, and there is no second copy to double-submit. */}
+                <div className="av-send" data-armed={reason ? "true" : "false"}>
+                  <button
+                    id="notifyOwnerBtn"
+                    type="submit"
+                    // Not green until it will actually send. A full-strength
+                    // send button that does nothing when pressed teaches
+                    // people that the button does nothing.
+                    className={`av-btn av-btn--block av-btn--lg ${
+                      !reason
+                        ? "av-btn--secondary"
+                        : reason === "emergency"
+                        ? "av-btn--emergency"
+                        : "av-btn--send"
+                    }`}
+                    disabled={sendDisabled}
+                  >
+                    {sending ? (
+                      <>
+                        <span className="av-spinner av-spinner--sm" aria-hidden="true"></span>
+                        {t("notifySending")}
+                      </>
+                    ) : throttled ? (
+                      `${t("notifyRateLimitedWait")} ${formatClock(retryLeft)}`
+                    ) : !reason ? (
+                      t("notifyPickReasonFirst")
+                    ) : reason === "emergency" ? (
+                      t("notifySendEmergency")
+                    ) : (
+                      t("notifySend")
+                    )}
+                  </button>
+                  {notifyFeedback.message && (
+                    <p
+                      id="notifyOwnerFeedback"
+                      className={`small mt-2 mb-0 ${feedbackClass}`}
+                      role="status"
+                      aria-live="polite"
+                    >
+                      {notifyFeedback.message}
+                    </p>
+                  )}
                 </div>
-              </div>
-              <div className="col-12 col-lg-4">
-                <div className="card shadow-sm h-100">
-                  <div className="card-body">
-                    <h5>How it Works</h5>
-                    <ol className="small ps-3 mb-0">
-                      <li className="mb-2">
-                        Scan the QR code – it encodes a secure token.
-                      </li>
-                      <li className="mb-2">
-                        Pick a reason and add a short note. Optionally share
-                        your contact.
-                      </li>
-                      <li className="mb-2">
-                        We send your message instantly via a secure push
-                        notification to the owner’s device.
-                      </li>
-                      <li className="mb-0">
-                        The owner taps to view and respond. Your contact
-                        details are shared only if you opted in.
-                      </li>
-                    </ol>
-                  </div>
+              </form>
+
+              {/* Below the fold on purpose. Somebody who is blocked in does
+                  not read this; somebody hesitating does, and it answers the
+                  three things they are hesitating about. */}
+              <div className="av-scan__explain">
+                <div className="av-card">
+                  <h4 className="av-card__title">{t("notifyHowTitle")}</h4>
+                  <ol className="av-howlist">
+                    <li>{t("notifyHow1")}</li>
+                    <li>{t("notifyHow2")}</li>
+                    <li>{t("notifyHow3")}</li>
+                    <li>{t("notifyHow4")}</li>
+                  </ol>
+                </div>
+                <div className="av-card av-card--info">
+                  <h4 className="av-card__title">{t("featLocationTitle")}</h4>
+                  <p className="small mb-0">{t("notifyLocationNote")}</p>
+                </div>
+                <div className="av-card av-card--muted">
+                  <p className="small mb-0">{t("sentPrivacy")}</p>
                 </div>
               </div>
             </div>
-          </div>
+          </section>
+        );
+      }
+
+      /**
+       * The chrome a scan gets.
+       *
+       * Not the site navigation. Somebody who has just pointed a camera at a
+       * sticker because a bike is blocking theirs has one job on this page,
+       * and a bar offering Home, Features, Plans, About and Contact is five
+       * ways off it — every one of them a way to lose the alert they came to
+       * send. What survives is the brand, so they know who they are trusting,
+       * and the two controls that decide whether they can read the page at
+       * all: language, and light or dark.
+       *
+       * Language especially. This ships in Bangalore, the person is doing the
+       * owner a favour, and asking them to work through a second language
+       * first is the wrong way round — so the toggle is a labelled control
+       * here rather than the two-letter icon button it is on the marketing
+       * pages.
+       */
+      function ScanBar() {
+        const { t, lang, setLang } = useT();
+        const { resolved, setTheme } = useTheme();
+        const nextLang = lang === "en" ? "kn" : "en";
+        const nextLangLabel = LANGUAGES.find((l) => l.id === nextLang).label;
+
+        return (
+          <header className="av-scanbar">
+            <div className="container av-scanbar__inner">
+              <a className="av-brand av-brand--sm" href="/index.html">
+                <img className="av-brand__mark" src="/logo.jpg" alt="" width="28" height="28" />
+                <span>Avahanaa</span>
+              </a>
+              <div className="av-scanbar__tools">
+                <button
+                  type="button"
+                  className="av-btn av-btn--ghost av-btn--chip"
+                  onClick={() => setLang(nextLang)}
+                  aria-label={t("navLanguage")}
+                >
+                  {nextLangLabel}
+                </button>
+                <button
+                  type="button"
+                  className="av-icon-btn"
+                  onClick={() => setTheme(resolved === "dark" ? "light" : "dark")}
+                  aria-label={resolved === "dark" ? t("navThemeLight") : t("navThemeDark")}
+                >
+                  <span aria-hidden="true">{resolved === "dark" ? "☀️" : "\u{1F319}"}</span>
+                </button>
+              </div>
+            </div>
+          </header>
+        );
+      }
+
+      /** Three links and a line. The full sitemap is not what this moment is for. */
+      function ScanFooter() {
+        const { t } = useT();
+        return (
+          <footer className="av-scanfoot">
+            <div className="container">
+              <p className="mb-0">{t("notifyFreeNote")}</p>
+              <p className="mb-0">
+                <a href="/privacy-policy.html">{t("navPrivacy")}</a>
+                <span aria-hidden="true"> · </span>
+                <a href="/terms-and-conditions.html">{t("navTerms")}</a>
+                <span aria-hidden="true"> · </span>
+                <a href={pageHref("")}>{t("navHome")}</a>
+              </p>
+            </div>
+          </footer>
         );
       }
 
@@ -2412,7 +4248,21 @@
        * Main App component which selects the page based on URL.
        */
       function App() {
-        const page = getCurrentRouteParams().get("page");
+        const language = useLanguage();
+        const params = getCurrentRouteParams();
+        const page = params.get("page") || "";
+        // A scan, as opposed to somebody browsing to the Notify page from the
+        // menu: the sticker route filled in `qr`, or a plate came in on the
+        // URL. Only that gets the stripped chrome — the Notify link in the nav
+        // still lands on the ordinary site.
+        const isScan =
+          page === "notify" &&
+          Boolean(
+            (params.get("qr") || "").trim() ||
+              (params.get("id") || "").trim() ||
+              (params.get("vehicle") || "").trim() ||
+              (params.get("payload") || "").trim()
+          );
         let Component;
         switch (page) {
           case "contact":
@@ -2424,15 +4274,23 @@
           case "about":
             Component = AboutPage;
             break;
+          case "features":
+            Component = FeaturesPage;
+            break;
+          case "plans":
+            Component = PlansPage;
+            break;
           default:
             Component = HomePage;
         }
         return (
-          <div>
-            <Navbar />
-            <Component />
-            <Footer />
-          </div>
+          <LanguageContext.Provider value={language}>
+            {isScan ? <ScanBar /> : <Navbar page={page} />}
+            <main>
+              <Component />
+            </main>
+            {isScan ? <ScanFooter /> : <Footer />}
+          </LanguageContext.Provider>
         );
       }
 
@@ -2440,8 +4298,5 @@
       const root = ReactDOM.createRoot(document.getElementById("root"));
       root.render(<App />);
     </script>
-
-    <!-- Bootstrap JS (for collapse nav etc.) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

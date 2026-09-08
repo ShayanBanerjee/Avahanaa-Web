@@ -61,9 +61,23 @@ const REASONS = new Set([
   "other",
 ]);
 
-/** Titles mirror `FCMService._titleFromReason` so the two sides agree. */
+/**
+ * The headline on the owner's lock screen.
+ *
+ * This string crosses the wire in the data payload and the app displays it
+ * verbatim; `FCMService._titleFromReason` is only the fallback for a push from
+ * an older sender that carried no title. So these are the server's words, and
+ * changing one here changes what owners read.
+ *
+ * `blocking_driveway` no longer says "driveway". The code is frozen — it is
+ * what the app keys its own fallback and its analytics off — but the commonest
+ * scan behind it is a two-wheeler boxed in outside a shop, nowhere near a
+ * driveway, and the lock screen is the one line the owner reads before
+ * deciding whether to get up. "Blocking someone in" is true of a driveway, a
+ * gate and a parking bay alike.
+ */
 const TITLES = {
-  blocking_driveway: "Your vehicle is blocking a driveway",
+  blocking_driveway: "Your vehicle is blocking someone in",
   illegal_parking: "Parking issue with your vehicle",
   blocking_traffic: "Your vehicle is blocking traffic",
   double_parked: "Your vehicle is double parked",

@@ -94,6 +94,17 @@ curl -s -o /dev/null -w '%{http_code}\n' https://avahanaa.com/api/qr/definitely-
 
 # Security headers are back.
 curl -sI https://avahanaa.com/ | grep -iE 'x-content-type|x-frame|referrer'
+
+# The stylesheet is served as CSS, not as the homepage's HTML.
+#
+# Every asset reference is root-absolute for this reason: a sticker lands on
+# /n/{qrCodeId}, and a relative `./theme.css` there resolves to /n/theme.css,
+# which the catch-all rewrite answers with index.html. The browser then drops
+# it for the wrong MIME type and the scan page — the one entry point that
+# matters — renders completely unstyled. Nothing else fails, so this is worth
+# asserting rather than eyeballing.
+curl -sI https://avahanaa.com/theme.css | grep -i 'content-type'   # text/css
+curl -s https://avahanaa.com/n/<REAL_QR_ID> | grep -c 'href="/theme.css"'  # 1
 ```
 
 Then the part that actually matters — **the alert path is not verified until a
